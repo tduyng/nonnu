@@ -1,5 +1,7 @@
 use crate::{env::Env, utils::extract_ident, val::Val};
 
+mod binding_usage;
+
 #[derive(Debug, PartialEq)]
 pub struct BindingUsage {
     pub name: String,
