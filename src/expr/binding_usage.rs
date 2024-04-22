@@ -1,7 +1,5 @@
 use crate::{env::Env, utils::extract_ident, val::Val};
 
-mod binding_usage;
-
 #[derive(Debug, PartialEq)]
 pub struct BindingUsage {
     pub name: String,
@@ -50,13 +48,14 @@ mod tests {
     }
 
     #[test]
-    fn eval_not_exist_binding_usage(){
+    fn eval_not_exist_binding_usage() {
         let empty_env = Env::default();
 
         assert_eq!(
-            BindingUsage{
+            BindingUsage {
                 name: "not-exist".to_string()
-            }.eval(&empty_env),
+            }
+            .eval(&empty_env),
             Err("binding with name 'not-exist' does not exist".to_string())
         )
     }
