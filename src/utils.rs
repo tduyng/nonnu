@@ -1,8 +1,4 @@
-pub fn extract_while<'a, F>(
-    accept: F,
-    s: &'a str,
-    error_msg: Option<String>,
-) -> Result<(&'a str, &'a str), String>
+pub fn extract_while<F>(accept: F, s: &str, error_msg: Option<String>) -> Result<(&str, &str), String>
 where
     F: Fn(char) -> bool,
 {
@@ -24,12 +20,12 @@ pub fn extract_digits(s: &str) -> Result<(&str, &str), String> {
     extract_while(|c| c.is_ascii_digit(), s, Some("expected digits".to_string()))
 }
 
-pub fn extract_whitespace(s: &str) -> (&str, &str) {
-    let (remainder, extracted) = extract_while(char::is_whitespace, s, None).unwrap_or(("", s));
+pub(crate) fn extract_whitespace(s: &str, error_msg: Option<String>) -> Result<(&str, &str), String> {
+    let (remainder, extracted) = extract_while(char::is_whitespace, s, error_msg)?;
     if let Some(first_non_whitespace) = remainder.find(|c: char| !c.is_whitespace()) {
-        (&remainder[first_non_whitespace..], extracted)
+        Ok((&remainder[first_non_whitespace..], extracted))
     } else {
-        (remainder, extracted)
+        Ok((remainder, extracted))
     }
 }
 
@@ -44,8 +40,8 @@ pub fn extract_ident(s: &str) -> Result<(&str, &str), String> {
 }
 
 pub fn remove_tag<'a>(tag: &'a str, s: &'a str) -> Result<&'a str, String> {
-    if s.starts_with(tag) {
-        Ok(&s[tag.len()..])
+    if let Some(stripped) = s.strip_prefix(tag) {
+        Ok(stripped)
     } else {
         Err(format!("Expected '{}'", tag))
     }
@@ -77,12 +73,12 @@ mod tests {
 
     #[test]
     fn extract_spaces() {
-        assert_eq!(extract_whitespace("    1"), ("1", "    "));
+        assert_eq!(extract_whitespace("    1", None), Ok(("1", "    ")));
     }
 
     #[test]
     fn do_not_extract_spaces_start_when_input_does_not_start_with_them() {
-        assert_eq!(extract_whitespace("blah"), ("blah", ""));
+        assert_eq!(extract_whitespace("blah", None), Ok(("blah", "")));
     }
 
     #[test]

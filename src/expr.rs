@@ -48,9 +48,9 @@ impl Expr {
 
     fn new_operation(s: &str) -> Result<(&str, Self), String> {
         let (s, lhs) = Number::new(s)?;
-        let (s, _) = extract_whitespace(s);
+        let (s, _) = extract_whitespace(s, None)?;
         let (s, op) = Op::new(s)?;
-        let (s, _) = extract_whitespace(s);
+        let (s, _) = extract_whitespace(s, None)?;
         let (s, rhs) = Number::new(s)?;
         Ok((s, Self::Operation { lhs, rhs, op }))
     }
