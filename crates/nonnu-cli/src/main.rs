@@ -1,5 +1,6 @@
-use nonnu::env::Env;
 use std::io::{self, Write};
+
+use nonnu::{Env, Val};
 
 fn main() -> io::Result<()> {
     let stdin = io::stdin();
@@ -14,22 +15,22 @@ fn main() -> io::Result<()> {
         stdin.read_line(&mut input)?;
 
         match run(input.trim(), &mut env) {
-            Ok(()) => {}
-            Err(msg) => {
-                writeln!(stderr, "{}", msg)?;
-                stderr.flush()?;
-            }
+            Ok(Some(val)) => writeln!(stdout, "{}", val)?,
+            Ok(None) => {}
+            Err(msg) => writeln!(stderr, "{}", msg)?,
         }
 
         input.clear();
     }
 }
 
-fn run(input: &str, env: &mut Env) -> Result<(), String> {
+fn run(input: &str, env: &mut Env) -> Result<Option<Val>, String> {
     let parse = nonnu::parse(input).map_err(|msg| format!("parse error: {}", msg))?;
     let evaluated = parse.eval(env).map_err(|msg| format!("evaluation error: {}", msg))?;
 
-    dbg!(evaluated);
-
-    Ok(())
+    if evaluated == nonnu::Val::Unit {
+        Ok(None)
+    } else {
+        Ok(Some(evaluated))
+    }
 }

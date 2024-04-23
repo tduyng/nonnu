@@ -1,13 +1,12 @@
-use env::Env;
-use val::Val;
-
-pub mod binding_def;
-pub mod env;
-pub mod expr;
-pub mod stmt;
-pub mod val;
-
+mod binding_def;
+mod env;
+mod expr;
+mod stmt;
 mod utils;
+mod val;
+
+pub use env::Env;
+pub use val::Val;
 
 #[derive(Debug)]
 pub struct Parse(stmt::Stmt);
