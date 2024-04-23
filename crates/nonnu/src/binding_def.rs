@@ -4,7 +4,7 @@ use crate::{
     utils::{extract_ident, extract_whitespace, remove_tag},
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct BindingDef {
     pub name: String,
     pub val: Expr,
@@ -49,8 +49,8 @@ mod tests {
                 BindingDef {
                     name: "a".to_string(),
                     val: Expr::Operation {
-                        lhs: Number(10),
-                        rhs: Number(2),
+                        lhs: Box::new(Expr::Number(Number(10))),
+                        rhs: Box::new(Expr::Number(Number(2))),
                         op: Op::Div,
                     },
                 },

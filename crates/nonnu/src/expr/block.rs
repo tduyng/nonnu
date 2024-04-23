@@ -5,7 +5,7 @@ use crate::{
     val::Val,
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Block {
     pub stmts: Vec<Stmt>,
 }
@@ -170,8 +170,8 @@ mod tests {
                     Stmt::Expr(Expr::Number(Number(100))),
                     Stmt::Expr(Expr::Number(Number(30))),
                     Stmt::Expr(Expr::Operation {
-                        lhs: Number(10),
-                        rhs: Number(7),
+                        lhs: Box::new(Expr::Number(Number(10))),
+                        rhs: Box::new(Expr::Number(Number(7))),
                         op: Op::Sub,
                     }),
                 ],
