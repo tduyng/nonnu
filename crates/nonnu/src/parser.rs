@@ -1,60 +1,86 @@
-use rowan::{GreenNode, GreenNodeBuilder, Language};
-use std::iter::Peekable;
+mod event;
+mod expr;
+mod sink;
+mod source;
+
+pub use event::*;
+pub use expr::*;
+pub use sink::*;
+pub use source::*;
 
 use crate::{
-    lexer::{Lexer, SyntaxKind},
-    syntax::{NonnuLanguage, SyntaxNode},
+    lexer::{Lexeme, Lexer, SyntaxKind},
+    syntax::SyntaxNode,
 };
+use rowan::GreenNode;
 
-pub struct Parser<'a> {
-    pub lexer: Peekable<Lexer<'a>>,
-    pub builder: GreenNodeBuilder<'static>,
+pub fn parse(input: &str) -> Parse {
+    let lexemes: Vec<_> = Lexer::new(input).collect();
+    // Convert Vec<(lexer::SyntaxKind, &str)> to Vec<Lexeme>
+    let lexeme_refs: Vec<Lexeme<'_>> = lexemes.iter().map(|&(kind, text)| Lexeme { kind, text }).collect();
+
+    let parser = Parser::new(&lexeme_refs);
+    let events = parser.parse();
+    let sink = Sink::new(&lexeme_refs, events);
+
+    Parse {
+        green_node: sink.finish(),
+    }
 }
 
-impl<'a> Parser<'a> {
-    pub fn new(input: &'a str) -> Self {
+pub struct Parser<'l, 'input> {
+    pub source: Source<'l, 'input>,
+    pub events: Vec<Event>,
+}
+
+impl<'l, 'input> Parser<'l, 'input> {
+    fn new(lexemes: &'l [Lexeme<'input>]) -> Self {
         Self {
-            lexer: Lexer::new(input).peekable(),
-            builder: GreenNodeBuilder::new(),
+            source: Source::new(lexemes),
+            events: Vec::new(),
         }
     }
 
-    pub fn parse(mut self) -> Parse {
+    fn parse(mut self) -> Vec<Event> {
         self.start_node(SyntaxKind::Root);
-
-        match self.peek() {
-            Some(SyntaxKind::Number) | Some(SyntaxKind::Ident) => self.bump(),
-            _ => {}
-        }
-
+        expr(&mut self);
         self.finish_node();
 
-        Parse {
-            green_node: self.builder.finish(),
-        }
+        self.events
     }
 
     fn start_node(&mut self, kind: SyntaxKind) {
-        self.builder.start_node(NonnuLanguage::kind_to_raw(kind));
+        self.events.push(Event::StartNode { kind });
+    }
+
+    fn start_node_at(&mut self, checkpoint: usize, kind: SyntaxKind) {
+        self.events.push(Event::StartNodeAt { kind, checkpoint });
     }
 
     fn finish_node(&mut self) {
-        self.builder.finish_node()
+        self.events.push(Event::FinishNode);
     }
 
     fn bump(&mut self) {
-        let (kind, text) = self.lexer.next().unwrap();
+        let Lexeme { kind, text } = self.source.next_lexeme().unwrap();
 
-        self.builder.token(NonnuLanguage::kind_to_raw(kind), text.into())
+        self.events.push(Event::AddToken {
+            kind: *kind,
+            text: (*text).into(),
+        });
+    }
+
+    fn checkpoint(&self) -> usize {
+        self.events.len()
     }
 
     fn peek(&mut self) -> Option<SyntaxKind> {
-        self.lexer.peek().map(|(kind, _)| *kind)
+        self.source.peek_kind()
     }
 }
 
 pub struct Parse {
-    green_node: GreenNode,
+    pub green_node: GreenNode,
 }
 
 impl Parse {
@@ -62,20 +88,20 @@ impl Parse {
         let syntax_node = SyntaxNode::new_root(self.green_node.clone());
         let formatted = format!("{:#?}", syntax_node);
 
-        // remove new line at the end
         formatted[0..formatted.len() - 1].to_string()
     }
 }
 
 #[cfg(test)]
+fn check(input: &str, expected_tree: expect_test::Expect) {
+    let parse = parse(input);
+    expected_tree.assert_eq(&parse.debug_tree());
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
-    use expect_test::{expect, Expect};
-
-    fn check(input: &str, expected_tree: Expect) {
-        let parse = Parser::new(input).parse();
-        expected_tree.assert_eq(&parse.debug_tree());
-    }
+    use expect_test::expect;
 
     #[test]
     fn parse_nothing() {
@@ -83,22 +109,12 @@ mod tests {
     }
 
     #[test]
-    fn parse_number() {
+    fn parse_whitespace() {
         check(
-            "123",
+            "   ",
             expect![[r#"
-   Root@0..3
-     Number@0..3 "123""#]],
-        );
-    }
-
-    #[test]
-    fn parse_binding_usage() {
-        check(
-            "counter",
-            expect![[r#"
-   Root@0..7
-     Ident@0..7 "counter""#]],
+Root@0..3
+  Whitespace@0..3 "   ""#]],
         );
     }
 }

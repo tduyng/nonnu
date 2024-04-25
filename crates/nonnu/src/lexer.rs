@@ -24,6 +24,12 @@ impl<'a> Iterator for Lexer<'a> {
     }
 }
 
+#[derive(Debug, PartialEq)]
+pub struct Lexeme<'a> {
+    pub kind: SyntaxKind,
+    pub text: &'a str,
+}
+
 #[derive(Debug, PartialEq, Logos, FromPrimitive, ToPrimitive, Hash, Clone, Copy, Eq, PartialOrd, Ord)]
 pub enum SyntaxKind {
     #[regex(" +")]
@@ -35,7 +41,7 @@ pub enum SyntaxKind {
     #[token("let")]
     LetKw,
 
-    #[regex("[A-Za-z][A-Za-z0-9]+", priority = 4)]
+    #[regex("[A-Za-z][A-Za-z0-9]*", priority = 4)]
     Ident,
 
     #[regex("[0-9]+")]
@@ -56,6 +62,12 @@ pub enum SyntaxKind {
     #[token("=")]
     Equals,
 
+    #[token("(")]
+    LParen,
+
+    #[token(")")]
+    RParen,
+
     #[token("{")]
     LBrace,
 
@@ -63,6 +75,8 @@ pub enum SyntaxKind {
     RBrace,
 
     Root,
+    BinaryExpr,
+    PrefixExpr,
 }
 
 #[cfg(test)]
@@ -106,6 +120,11 @@ mod tests {
     }
 
     #[test]
+    fn lex_single_char_identifier() {
+        check("x", SyntaxKind::Ident);
+    }
+
+    #[test]
     fn lex_number() {
         check("123456", SyntaxKind::Number);
     }
@@ -133,6 +152,16 @@ mod tests {
     #[test]
     fn lex_equals() {
         check("=", SyntaxKind::Equals);
+    }
+
+    #[test]
+    fn lex_left_parenthesis() {
+        check("(", SyntaxKind::LParen);
+    }
+
+    #[test]
+    fn lex_right_parenthesis() {
+        check(")", SyntaxKind::RParen);
     }
 
     #[test]
