@@ -1,6 +1,29 @@
 use logos::Logos;
 use num_derive::{FromPrimitive, ToPrimitive};
 
+pub struct Lexer<'a> {
+    pub inner: logos::Lexer<'a, SyntaxKind>,
+}
+
+impl<'a> Lexer<'a> {
+    pub fn new(input: &'a str) -> Self {
+        Self {
+            inner: SyntaxKind::lexer(input),
+        }
+    }
+}
+
+impl<'a> Iterator for Lexer<'a> {
+    type Item = (SyntaxKind, &'a str);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let kind = self.inner.next()?.unwrap();
+        let text = self.inner.slice();
+
+        Some((kind, text))
+    }
+}
+
 #[derive(Debug, PartialEq, Logos, FromPrimitive, ToPrimitive, Hash, Clone, Copy, Eq, PartialOrd, Ord)]
 pub enum SyntaxKind {
     #[regex(" +")]

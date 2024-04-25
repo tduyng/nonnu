@@ -1,26 +1,32 @@
-use logos::Logos;
 use rowan::{GreenNode, GreenNodeBuilder, Language};
+use std::iter::Peekable;
 
 use crate::{
-    lexer::SyntaxKind,
+    lexer::{Lexer, SyntaxKind},
     syntax::{NonnuLanguage, SyntaxNode},
 };
 
 pub struct Parser<'a> {
-    pub lexer: logos::Lexer<'a, SyntaxKind>,
+    pub lexer: Peekable<Lexer<'a>>,
     pub builder: GreenNodeBuilder<'static>,
 }
 
 impl<'a> Parser<'a> {
     pub fn new(input: &'a str) -> Self {
         Self {
-            lexer: SyntaxKind::lexer(input),
+            lexer: Lexer::new(input).peekable(),
             builder: GreenNodeBuilder::new(),
         }
     }
 
     pub fn parse(mut self) -> Parse {
         self.start_node(SyntaxKind::Root);
+
+        match self.peek() {
+            Some(SyntaxKind::Number) | Some(SyntaxKind::Ident) => self.bump(),
+            _ => {}
+        }
+
         self.finish_node();
 
         Parse {
@@ -34,6 +40,16 @@ impl<'a> Parser<'a> {
 
     fn finish_node(&mut self) {
         self.builder.finish_node()
+    }
+
+    fn bump(&mut self) {
+        let (kind, text) = self.lexer.next().unwrap();
+
+        self.builder.token(NonnuLanguage::kind_to_raw(kind), text.into())
+    }
+
+    fn peek(&mut self) -> Option<SyntaxKind> {
+        self.lexer.peek().map(|(kind, _)| *kind)
     }
 }
 
@@ -64,5 +80,25 @@ mod tests {
     #[test]
     fn parse_nothing() {
         check("", expect![[r#"Root@0..0"#]]);
+    }
+
+    #[test]
+    fn parse_number() {
+        check(
+            "123",
+            expect![[r#"
+   Root@0..3
+     Number@0..3 "123""#]],
+        );
+    }
+
+    #[test]
+    fn parse_binding_usage() {
+        check(
+            "counter",
+            expect![[r#"
+   Root@0..7
+     Ident@0..7 "counter""#]],
+        );
     }
 }
