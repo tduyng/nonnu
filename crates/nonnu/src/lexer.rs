@@ -1,6 +1,7 @@
 use logos::Logos;
+use num_derive::{FromPrimitive, ToPrimitive};
 
-#[derive(Debug, PartialEq, Logos)]
+#[derive(Debug, PartialEq, Logos, FromPrimitive, ToPrimitive, Hash, Clone, Copy, Eq, PartialOrd, Ord)]
 pub enum SyntaxKind {
     #[regex(" +")]
     Whitespace,
@@ -37,6 +38,8 @@ pub enum SyntaxKind {
 
     #[token("}")]
     RBrace,
+
+    Root,
 }
 
 #[cfg(test)]

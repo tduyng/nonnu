@@ -7,3 +7,9 @@ edition = "2021"
 
 [dependencies]
 logos = "0.14.0"
+num-derive = "0.4.2"
+num-traits = "0.2.18"
+rowan = "0.15.15"
+
+[dev-dependencies]
+expect-test = "1.5.0"
