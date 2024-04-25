@@ -82,6 +82,12 @@ pub enum SyntaxKind {
     PrefixExpr,
 }
 
+impl SyntaxKind {
+    pub fn is_trivia(self) -> bool {
+        matches!(self, Self::Whitespace | Self::Comment)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
