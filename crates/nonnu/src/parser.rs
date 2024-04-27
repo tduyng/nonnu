@@ -17,12 +17,12 @@ use crate::{
 use rowan::GreenNode;
 
 pub fn parse(input: &str) -> Parse {
-    let lexemes: Vec<_> = Lexer::new(input).collect();
-    let lexeme_refs: Vec<Token<'_>> = lexemes.iter().map(|&(kind, text)| Token { kind, text }).collect();
+    let tokens: Vec<_> = Lexer::new(input).collect();
+    let token_refs: Vec<Token<'_>> = tokens.iter().map(|&(kind, text)| Token { kind, text }).collect();
 
-    let parser = Parser::new(&lexeme_refs);
+    let parser = Parser::new(&token_refs);
     let events = parser.parse();
-    let sink = Sink::new(&lexeme_refs, events);
+    let sink = Sink::new(&token_refs, events);
 
     Parse {
         green_node: sink.finish(),
@@ -35,9 +35,9 @@ pub struct Parser<'l, 'input> {
 }
 
 impl<'l, 'input> Parser<'l, 'input> {
-    fn new(lexemes: &'l [Token<'input>]) -> Self {
+    fn new(tokens: &'l [Token<'input>]) -> Self {
         Self {
-            source: Source::new(lexemes),
+            source: Source::new(tokens),
             events: Vec::new(),
         }
     }
@@ -57,12 +57,8 @@ impl<'l, 'input> Parser<'l, 'input> {
     }
 
     fn bump(&mut self) {
-        let Token { kind, text } = self.source.next_lexeme().unwrap();
-
-        self.events.push(Event::AddToken {
-            kind: *kind,
-            text: (*text).into(),
-        });
+        self.source.next_token().unwrap();
+        self.events.push(Event::AddToken);
     }
 
     fn peek(&mut self) -> Option<SyntaxKind> {

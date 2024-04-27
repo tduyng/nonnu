@@ -1,8 +1,5 @@
 use super::Event;
-use crate::{
-    lexer::{SyntaxKind, Token},
-    syntax::NonnuLanguage,
-};
+use crate::{lexer::Token, syntax::NonnuLanguage};
 use rowan::{GreenNode, GreenNodeBuilder, Language};
 use std::mem;
 
@@ -49,7 +46,7 @@ impl<'l, 'input> Sink<'l, 'input> {
                         self.builder.start_node(NonnuLanguage::kind_to_raw(kind));
                     }
                 }
-                Event::AddToken { kind, text } => self.token(kind, text.as_str()),
+                Event::AddToken => self.token(),
                 Event::FinishNode => self.builder.finish_node(),
                 Event::Placeholder => {}
             }
@@ -61,16 +58,17 @@ impl<'l, 'input> Sink<'l, 'input> {
     }
 
     fn eat_trivia(&mut self) {
-        while let Some(lexeme) = self.tokens.get(self.cursor) {
-            if !lexeme.kind.is_trivia() {
+        while let Some(token) = self.tokens.get(self.cursor) {
+            if !token.kind.is_trivia() {
                 break;
             }
 
-            self.token(lexeme.kind, lexeme.text);
+            self.token();
         }
     }
 
-    fn token(&mut self, kind: SyntaxKind, text: &str) {
+    fn token(&mut self) {
+        let Token { kind, text } = self.tokens[self.cursor];
         self.builder.token(NonnuLanguage::kind_to_raw(kind), text);
         self.cursor += 1;
     }
