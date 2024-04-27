@@ -78,7 +78,7 @@ pub enum SyntaxKind {
     Comment,
 
     Root,
-    BinaryExpr,
+    InfixExpr,
     PrefixExpr,
     Literal,
     ParenExpr,
