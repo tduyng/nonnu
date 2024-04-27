@@ -11,14 +11,14 @@ pub use sink::*;
 pub use source::*;
 
 use crate::{
-    lexer::{Lexeme, Lexer, SyntaxKind},
+    lexer::{Lexer, SyntaxKind, Token},
     syntax::SyntaxNode,
 };
 use rowan::GreenNode;
 
 pub fn parse(input: &str) -> Parse {
     let lexemes: Vec<_> = Lexer::new(input).collect();
-    let lexeme_refs: Vec<Lexeme<'_>> = lexemes.iter().map(|&(kind, text)| Lexeme { kind, text }).collect();
+    let lexeme_refs: Vec<Token<'_>> = lexemes.iter().map(|&(kind, text)| Token { kind, text }).collect();
 
     let parser = Parser::new(&lexeme_refs);
     let events = parser.parse();
@@ -35,7 +35,7 @@ pub struct Parser<'l, 'input> {
 }
 
 impl<'l, 'input> Parser<'l, 'input> {
-    fn new(lexemes: &'l [Lexeme<'input>]) -> Self {
+    fn new(lexemes: &'l [Token<'input>]) -> Self {
         Self {
             source: Source::new(lexemes),
             events: Vec::new(),
@@ -57,7 +57,7 @@ impl<'l, 'input> Parser<'l, 'input> {
     }
 
     fn bump(&mut self) {
-        let Lexeme { kind, text } = self.source.next_lexeme().unwrap();
+        let Token { kind, text } = self.source.next_lexeme().unwrap();
 
         self.events.push(Event::AddToken {
             kind: *kind,

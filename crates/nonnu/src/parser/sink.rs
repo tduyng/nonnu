@@ -1,6 +1,6 @@
 use super::Event;
 use crate::{
-    lexer::{Lexeme, SyntaxKind},
+    lexer::{SyntaxKind, Token},
     syntax::NonnuLanguage,
 };
 use rowan::{GreenNode, GreenNodeBuilder, Language};
@@ -8,16 +8,16 @@ use std::mem;
 
 pub struct Sink<'l, 'input> {
     builder: GreenNodeBuilder<'static>,
-    lexemes: &'l [Lexeme<'input>],
+    tokens: &'l [Token<'input>],
     cursor: usize,
     events: Vec<Event>,
 }
 
 impl<'l, 'input> Sink<'l, 'input> {
-    pub fn new(lexemes: &'l [Lexeme<'input>], events: Vec<Event>) -> Self {
+    pub fn new(tokens: &'l [Token<'input>], events: Vec<Event>) -> Self {
         Self {
             builder: GreenNodeBuilder::new(),
-            lexemes,
+            tokens,
             cursor: 0,
             events,
         }
@@ -61,7 +61,7 @@ impl<'l, 'input> Sink<'l, 'input> {
     }
 
     fn eat_trivia(&mut self) {
-        while let Some(lexeme) = self.lexemes.get(self.cursor) {
+        while let Some(lexeme) = self.tokens.get(self.cursor) {
             if !lexeme.kind.is_trivia() {
                 break;
             }

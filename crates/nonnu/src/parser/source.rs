@@ -1,16 +1,16 @@
-use crate::lexer::{Lexeme, SyntaxKind};
+use crate::lexer::{SyntaxKind, Token};
 
 pub struct Source<'l, 'input> {
-    pub lexemes: &'l [Lexeme<'input>],
+    pub lexemes: &'l [Token<'input>],
     pub cursor: usize,
 }
 
 impl<'l, 'input> Source<'l, 'input> {
-    pub fn new(lexemes: &'l [Lexeme<'input>]) -> Self {
+    pub fn new(lexemes: &'l [Token<'input>]) -> Self {
         Self { lexemes, cursor: 0 }
     }
 
-    pub fn next_lexeme(&mut self) -> Option<&'l Lexeme<'input>> {
+    pub fn next_lexeme(&mut self) -> Option<&'l Token<'input>> {
         self.eat_trivia();
 
         let lexeme = self.lexemes.get(self.cursor)?;
@@ -35,6 +35,6 @@ impl<'l, 'input> Source<'l, 'input> {
     }
 
     fn peek_kind_raw(&self) -> Option<SyntaxKind> {
-        self.lexemes.get(self.cursor).map(|Lexeme { kind, .. }| *kind)
+        self.lexemes.get(self.cursor).map(|Token { kind, .. }| *kind)
     }
 }

@@ -25,7 +25,7 @@ impl<'a> Iterator for Lexer<'a> {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Lexeme<'a> {
+pub struct Token<'a> {
     pub kind: SyntaxKind,
     pub text: &'a str,
 }
