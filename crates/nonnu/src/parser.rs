@@ -1,10 +1,12 @@
 mod event;
 mod expr;
+mod marker;
 mod sink;
 mod source;
 
 pub use event::*;
 pub use expr::*;
+pub use marker::*;
 pub use sink::*;
 pub use source::*;
 
@@ -16,7 +18,6 @@ use rowan::GreenNode;
 
 pub fn parse(input: &str) -> Parse {
     let lexemes: Vec<_> = Lexer::new(input).collect();
-    // Convert Vec<(lexer::SyntaxKind, &str)> to Vec<Lexeme>
     let lexeme_refs: Vec<Lexeme<'_>> = lexemes.iter().map(|&(kind, text)| Lexeme { kind, text }).collect();
 
     let parser = Parser::new(&lexeme_refs);
@@ -42,23 +43,17 @@ impl<'l, 'input> Parser<'l, 'input> {
     }
 
     fn parse(mut self) -> Vec<Event> {
-        self.start_node(SyntaxKind::Root);
+        let m = self.start();
         expr(&mut self);
-        self.finish_node();
+        m.complete(&mut self, SyntaxKind::Root);
 
         self.events
     }
 
-    fn start_node(&mut self, kind: SyntaxKind) {
-        self.events.push(Event::StartNode { kind });
-    }
-
-    fn start_node_at(&mut self, checkpoint: usize, kind: SyntaxKind) {
-        self.events.push(Event::StartNodeAt { kind, checkpoint });
-    }
-
-    fn finish_node(&mut self) {
-        self.events.push(Event::FinishNode);
+    fn start(&mut self) -> Marker {
+        let pos = self.events.len();
+        self.events.push(Event::Placeholder);
+        Marker::new(pos)
     }
 
     fn bump(&mut self) {
@@ -70,12 +65,12 @@ impl<'l, 'input> Parser<'l, 'input> {
         });
     }
 
-    fn checkpoint(&self) -> usize {
-        self.events.len()
-    }
-
     fn peek(&mut self) -> Option<SyntaxKind> {
         self.source.peek_kind()
+    }
+
+    fn at(&mut self, kind: SyntaxKind) -> bool {
+        self.peek() == Some(kind)
     }
 }
 

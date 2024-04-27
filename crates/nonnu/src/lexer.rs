@@ -80,6 +80,9 @@ pub enum SyntaxKind {
     Root,
     BinaryExpr,
     PrefixExpr,
+    Literal,
+    ParenExpr,
+    VariableRef,
 }
 
 impl SyntaxKind {
