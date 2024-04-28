@@ -2,19 +2,19 @@ use logos::Logos;
 use num_derive::{FromPrimitive, ToPrimitive};
 
 pub struct Lexer<'a> {
-    pub inner: logos::Lexer<'a, SyntaxKind>,
+    pub inner: logos::Lexer<'a, TokenKind>,
 }
 
 impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Self {
         Self {
-            inner: SyntaxKind::lexer(input),
+            inner: TokenKind::lexer(input),
         }
     }
 }
 
 impl<'a> Iterator for Lexer<'a> {
-    type Item = (SyntaxKind, &'a str);
+    type Item = (TokenKind, &'a str);
 
     fn next(&mut self) -> Option<Self::Item> {
         let kind = self.inner.next()?.unwrap();
@@ -26,12 +26,12 @@ impl<'a> Iterator for Lexer<'a> {
 
 #[derive(Debug, PartialEq)]
 pub struct Token<'a> {
-    pub kind: SyntaxKind,
+    pub kind: TokenKind,
     pub text: &'a str,
 }
 
 #[derive(Debug, PartialEq, Logos, FromPrimitive, ToPrimitive, Hash, Clone, Copy, Eq, PartialOrd, Ord)]
-pub enum SyntaxKind {
+pub enum TokenKind {
     #[regex("[ \n]+")]
     Whitespace,
 
@@ -85,7 +85,7 @@ pub enum SyntaxKind {
     VariableRef,
 }
 
-impl SyntaxKind {
+impl TokenKind {
     pub fn is_trivia(self) -> bool {
         matches!(self, Self::Whitespace | Self::Comment)
     }
@@ -95,104 +95,104 @@ impl SyntaxKind {
 mod tests {
     use super::*;
 
-    fn check(input: &str, kind: SyntaxKind) {
-        let mut lexer = SyntaxKind::lexer(input);
+    fn check(input: &str, kind: TokenKind) {
+        let mut lexer = TokenKind::lexer(input);
         assert_eq!(lexer.next(), Some(Ok(kind)));
         assert_eq!(lexer.slice(), input);
     }
 
     #[test]
     fn lex_spaces() {
-        check("   ", SyntaxKind::Whitespace);
+        check("   ", TokenKind::Whitespace);
     }
 
     #[test]
     fn lex_spaces_and_newlines() {
-        check("  \n ", SyntaxKind::Whitespace);
+        check("  \n ", TokenKind::Whitespace);
     }
 
     #[test]
     fn lex_fn_keyword() {
-        check("fn", SyntaxKind::FnKw);
+        check("fn", TokenKind::FnKw);
     }
 
     #[test]
     fn lex_let_keyword() {
-        check("let", SyntaxKind::LetKw);
+        check("let", TokenKind::LetKw);
     }
 
     #[test]
     fn lex_alphabetic_identifier() {
-        check("abcd", SyntaxKind::Ident);
+        check("abcd", TokenKind::Ident);
     }
 
     #[test]
     fn lex_alphanumeric_identifier() {
-        check("ab123cde456", SyntaxKind::Ident);
+        check("ab123cde456", TokenKind::Ident);
     }
 
     #[test]
     fn lex_mixed_case_identifier() {
-        check("ABCdef", SyntaxKind::Ident);
+        check("ABCdef", TokenKind::Ident);
     }
 
     #[test]
     fn lex_single_char_identifier() {
-        check("x", SyntaxKind::Ident);
+        check("x", TokenKind::Ident);
     }
 
     #[test]
     fn lex_number() {
-        check("123456", SyntaxKind::Number);
+        check("123456", TokenKind::Number);
     }
 
     #[test]
     fn lex_plus() {
-        check("+", SyntaxKind::Plus);
+        check("+", TokenKind::Plus);
     }
 
     #[test]
     fn lex_minus() {
-        check("-", SyntaxKind::Minus);
+        check("-", TokenKind::Minus);
     }
 
     #[test]
     fn lex_star() {
-        check("*", SyntaxKind::Star);
+        check("*", TokenKind::Star);
     }
 
     #[test]
     fn lex_slash() {
-        check("/", SyntaxKind::Slash);
+        check("/", TokenKind::Slash);
     }
 
     #[test]
     fn lex_equals() {
-        check("=", SyntaxKind::Equals);
+        check("=", TokenKind::Equals);
     }
 
     #[test]
     fn lex_left_parenthesis() {
-        check("(", SyntaxKind::LParen);
+        check("(", TokenKind::LParen);
     }
 
     #[test]
     fn lex_right_parenthesis() {
-        check(")", SyntaxKind::RParen);
+        check(")", TokenKind::RParen);
     }
 
     #[test]
     fn lex_left_brace() {
-        check("{", SyntaxKind::LBrace);
+        check("{", TokenKind::LBrace);
     }
 
     #[test]
     fn lex_right_brace() {
-        check("}", SyntaxKind::RBrace);
+        check("}", TokenKind::RBrace);
     }
 
     #[test]
     fn lex_comment() {
-        check("# foo", SyntaxKind::Comment);
+        check("# foo", TokenKind::Comment);
     }
 }

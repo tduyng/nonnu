@@ -11,7 +11,7 @@ pub use sink::*;
 pub use source::*;
 
 use crate::{
-    lexer::{Lexer, SyntaxKind, Token},
+    lexer::{Lexer, Token, TokenKind},
     syntax::SyntaxNode,
 };
 use rowan::GreenNode;
@@ -45,7 +45,7 @@ impl<'l, 'input> Parser<'l, 'input> {
     fn parse(mut self) -> Vec<Event> {
         let m = self.start();
         expr(&mut self);
-        m.complete(&mut self, SyntaxKind::Root);
+        m.complete(&mut self, TokenKind::Root);
 
         self.events
     }
@@ -61,11 +61,11 @@ impl<'l, 'input> Parser<'l, 'input> {
         self.events.push(Event::AddToken);
     }
 
-    fn peek(&mut self) -> Option<SyntaxKind> {
+    fn peek(&mut self) -> Option<TokenKind> {
         self.source.peek_kind()
     }
 
-    fn at(&mut self, kind: SyntaxKind) -> bool {
+    fn at(&mut self, kind: TokenKind) -> bool {
         self.peek() == Some(kind)
     }
 }

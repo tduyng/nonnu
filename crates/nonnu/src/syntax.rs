@@ -1,4 +1,4 @@
-use crate::lexer::SyntaxKind;
+use crate::lexer::TokenKind;
 use num_traits::{FromPrimitive, ToPrimitive};
 pub type SyntaxNode = rowan::SyntaxNode<NonnuLanguage>;
 
@@ -6,7 +6,7 @@ pub type SyntaxNode = rowan::SyntaxNode<NonnuLanguage>;
 pub enum NonnuLanguage {}
 
 impl rowan::Language for NonnuLanguage {
-    type Kind = SyntaxKind;
+    type Kind = TokenKind;
 
     fn kind_from_raw(raw: rowan::SyntaxKind) -> Self::Kind {
         Self::Kind::from_u16(raw.0).unwrap()

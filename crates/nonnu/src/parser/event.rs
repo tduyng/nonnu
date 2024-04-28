@@ -1,9 +1,9 @@
-use crate::lexer::SyntaxKind;
+use crate::lexer::TokenKind;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Event {
     StartNode {
-        kind: SyntaxKind,
+        kind: TokenKind,
         forward_parent: Option<usize>,
     },
     AddToken,
