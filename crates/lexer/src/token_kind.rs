@@ -1,47 +1,17 @@
 use logos::Logos;
-use num_derive::{FromPrimitive, ToPrimitive};
 
-pub struct Lexer<'a> {
-    pub inner: logos::Lexer<'a, TokenKind>,
-}
-
-impl<'a> Lexer<'a> {
-    pub fn new(input: &'a str) -> Self {
-        Self {
-            inner: TokenKind::lexer(input),
-        }
-    }
-}
-
-impl<'a> Iterator for Lexer<'a> {
-    type Item = (TokenKind, &'a str);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let kind = self.inner.next()?.unwrap();
-        let text = self.inner.slice();
-
-        Some((kind, text))
-    }
-}
-
-#[derive(Debug, PartialEq)]
-pub struct Token<'a> {
-    pub kind: TokenKind,
-    pub text: &'a str,
-}
-
-#[derive(Debug, PartialEq, Logos, FromPrimitive, ToPrimitive, Hash, Clone, Copy, Eq, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, PartialEq, Logos)]
 pub enum TokenKind {
     #[regex("[ \n]+")]
     Whitespace,
 
-    #[token("fn", priority = 5)]
+    #[token("fn")]
     FnKw,
 
     #[token("let")]
     LetKw,
 
-    #[regex("[A-Za-z][A-Za-z0-9]*", priority = 4)]
+    #[regex("[A-Za-z][A-Za-z0-9]*")]
     Ident,
 
     #[regex("[0-9]+")]
@@ -76,19 +46,6 @@ pub enum TokenKind {
 
     #[regex("#.*")]
     Comment,
-
-    Root,
-    InfixExpr,
-    PrefixExpr,
-    Literal,
-    ParenExpr,
-    VariableRef,
-}
-
-impl TokenKind {
-    pub fn is_trivia(self) -> bool {
-        matches!(self, Self::Whitespace | Self::Comment)
-    }
 }
 
 #[cfg(test)]
@@ -99,11 +56,6 @@ mod tests {
         let mut lexer = TokenKind::lexer(input);
         assert_eq!(lexer.next(), Some(Ok(kind)));
         assert_eq!(lexer.slice(), input);
-    }
-
-    #[test]
-    fn lex_spaces() {
-        check("   ", TokenKind::Whitespace);
     }
 
     #[test]

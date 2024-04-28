@@ -1,7 +1,7 @@
-use super::event::Event;
 use super::Parser;
-use crate::lexer::TokenKind;
+use crate::event::Event;
 use drop_bomb::DropBomb;
+use syntax::SyntaxKind;
 
 pub struct Marker {
     pos: usize,
@@ -9,14 +9,14 @@ pub struct Marker {
 }
 
 impl Marker {
-    pub(super) fn new(pos: usize) -> Self {
+    pub fn new(pos: usize) -> Self {
         Self {
             pos,
             bomb: DropBomb::new("Markers need to be completed"),
         }
     }
 
-    pub(super) fn complete(mut self, p: &mut Parser, kind: TokenKind) -> CompletedMarker {
+    pub fn complete(mut self, p: &mut Parser, kind: SyntaxKind) -> CompletedMarker {
         self.bomb.defuse();
 
         let event_at_pos = &mut p.events[self.pos];
@@ -38,7 +38,7 @@ pub struct CompletedMarker {
 }
 
 impl CompletedMarker {
-    pub(super) fn precede(self, p: &mut Parser) -> Marker {
+    pub fn precede(self, p: &mut Parser) -> Marker {
         let new_m = p.start();
 
         if let Event::StartNode {

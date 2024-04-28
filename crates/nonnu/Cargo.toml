@@ -3,14 +3,5 @@ name = "nonnu"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-drop_bomb = "0.1.5"
-logos = "0.14.0"
-num-derive = "0.4.2"
-num-traits = "0.2.18"
-rowan = "0.15.15"
-
-[dev-dependencies]
-expect-test = "1.5.0"
+parser = { path = "../parser" }

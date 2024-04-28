@@ -1,47 +1,44 @@
-use crate::lexer::TokenKind;
+use super::*;
 
-use super::{CompletedMarker, Parser};
-
-pub fn expr(p: &mut Parser) {
-    expr_binding_power(p, 0);
+pub fn expr(p: &mut Parser) -> Option<CompletedMarker> {
+    expr_binding_power(p, 0)
 }
 
-fn expr_binding_power(p: &mut Parser, minimum_binding_power: u8) {
-    let mut lhs = if let Some(lhs) = lhs(p) {
-        lhs
-    } else {
-        return;
-    };
+fn expr_binding_power(p: &mut Parser, minimum_binding_power: u8) -> Option<CompletedMarker> {
+    let mut lhs = lhs(p)?;
 
     loop {
         let op = match p.peek() {
-            Some(TokenKind::Plus) => BinaryOp::Add,
-            Some(TokenKind::Minus) => BinaryOp::Sub,
-            Some(TokenKind::Star) => BinaryOp::Mul,
-            Some(TokenKind::Slash) => BinaryOp::Div,
-            _ => return,
+            Some(SyntaxKind::Plus) => BinaryOp::Add,
+            Some(SyntaxKind::Minus) => BinaryOp::Sub,
+            Some(SyntaxKind::Star) => BinaryOp::Mul,
+            Some(SyntaxKind::Slash) => BinaryOp::Div,
+            _ => return None,
         };
 
         let (left_binding_power, right_binding_power) = op.binding_power();
 
         if left_binding_power < minimum_binding_power {
-            return;
+            break;
         }
 
+        // Eat the operator’s token.
         p.bump();
 
         let m = lhs.precede(p);
         expr_binding_power(p, right_binding_power);
-        lhs = m.complete(p, TokenKind::InfixExpr);
+        lhs = m.complete(p, SyntaxKind::InfixExpr);
     }
+
+    Some(lhs)
 }
 
 fn lhs(p: &mut Parser) -> Option<CompletedMarker> {
     let cm = match p.peek() {
-        Some(TokenKind::Number) => literal(p),
-        Some(TokenKind::Ident) => variable_ref(p),
-        Some(TokenKind::Minus) => prefix_expr(p),
-        Some(TokenKind::LParen) => paren_expr(p),
+        Some(SyntaxKind::Number) => literal(p),
+        Some(SyntaxKind::Ident) => variable_ref(p),
+        Some(SyntaxKind::Minus) => prefix_expr(p),
+        Some(SyntaxKind::LParen) => paren_expr(p),
         _ => return None,
     };
 
@@ -77,23 +74,23 @@ impl UnaryOp {
 }
 
 fn literal(p: &mut Parser) -> CompletedMarker {
-    assert!(p.at(TokenKind::Number));
+    assert!(p.at(SyntaxKind::Number));
 
     let m = p.start();
     p.bump();
-    m.complete(p, TokenKind::Literal)
+    m.complete(p, SyntaxKind::Literal)
 }
 
 fn variable_ref(p: &mut Parser) -> CompletedMarker {
-    assert!(p.at(TokenKind::Ident));
+    assert!(p.at(SyntaxKind::Ident));
 
     let m = p.start();
     p.bump();
-    m.complete(p, TokenKind::VariableRef)
+    m.complete(p, SyntaxKind::VariableRef)
 }
 
 fn prefix_expr(p: &mut Parser) -> CompletedMarker {
-    assert!(p.at(TokenKind::Minus));
+    assert!(p.at(SyntaxKind::Minus));
 
     let m = p.start();
 
@@ -105,26 +102,26 @@ fn prefix_expr(p: &mut Parser) -> CompletedMarker {
 
     expr_binding_power(p, right_binding_power);
 
-    m.complete(p, TokenKind::PrefixExpr)
+    m.complete(p, SyntaxKind::PrefixExpr)
 }
 
 fn paren_expr(p: &mut Parser) -> CompletedMarker {
-    assert!(p.at(TokenKind::LParen));
+    assert!(p.at(SyntaxKind::LParen));
 
     let m = p.start();
 
     p.bump();
     expr_binding_power(p, 0);
 
-    assert!(p.at(TokenKind::RParen));
+    assert!(p.at(SyntaxKind::RParen));
     p.bump();
 
-    m.complete(p, TokenKind::ParenExpr)
+    m.complete(p, SyntaxKind::ParenExpr)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::super::check;
+    use crate::check;
     use expect_test::expect;
 
     #[test]

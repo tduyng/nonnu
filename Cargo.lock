@@ -61,6 +61,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
+name = "lexer"
+version = "0.1.0"
+dependencies = [
+ "logos",
+]
+
+[[package]]
 name = "logos"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -106,19 +113,7 @@ dependencies = [
 name = "nonnu"
 version = "0.1.0"
 dependencies = [
- "drop_bomb",
- "expect-test",
- "logos",
- "num-derive",
- "num-traits",
- "rowan",
-]
-
-[[package]]
-name = "nonnu-cli"
-version = "0.1.0"
-dependencies = [
- "nonnu",
+ "parser",
 ]
 
 [[package]]
@@ -146,6 +141,17 @@ name = "once_cell"
 version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3fdb12b2476b595f9358c5161aa467c2438859caa136dec86c26fdd2efe17b92"
+
+[[package]]
+name = "parser"
+version = "0.1.0"
+dependencies = [
+ "drop_bomb",
+ "expect-test",
+ "lexer",
+ "rowan",
+ "syntax",
+]
 
 [[package]]
 name = "proc-macro2"
@@ -199,6 +205,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "syntax"
+version = "0.1.0"
+dependencies = [
+ "lexer",
+ "num-derive",
+ "num-traits",
+ "rowan",
 ]
 
 [[package]]
