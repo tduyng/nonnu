@@ -42,7 +42,7 @@ impl<'t, 'input> Parser<'t, 'input> {
         self.peek() == Some(kind)
     }
 
-    pub fn peek(&mut self) -> Option<SyntaxKind> {
+    fn peek(&mut self) -> Option<SyntaxKind> {
         self.source.peek_kind()
     }
 

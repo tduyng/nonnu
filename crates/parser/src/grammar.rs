@@ -7,7 +7,7 @@ use syntax::SyntaxKind;
 
 pub fn root(p: &mut Parser) -> CompletedMarker {
     let m = p.start();
-    while !p.at_end(){
+    while !p.at_end() {
         stmt::stmt(p);
     }
 
