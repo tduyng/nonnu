@@ -26,12 +26,15 @@ fn expr_binding_power(p: &mut Parser, minimum_binding_power: u8) -> Option<Compl
             break;
         }
 
-        // Eat the operator’s token.
+        // Eat the operator's token.
         p.bump();
 
         let m = lhs.precede(p);
-        expr_binding_power(p, right_binding_power);
+        let parsed_rhs = expr_binding_power(p, right_binding_power).is_some();
         lhs = m.complete(p, SyntaxKind::InfixExpr);
+        if !parsed_rhs {
+            break;
+        }
     }
 
     Some(lhs)
@@ -106,7 +109,7 @@ fn prefix_expr(p: &mut Parser) -> CompletedMarker {
     let op = UnaryOp::Neg;
     let ((), right_binding_power) = op.binding_power();
 
-    // Eat the operator’s token.
+    // Eat the operator's token.
     p.bump();
 
     expr_binding_power(p, right_binding_power);
@@ -397,7 +400,25 @@ Root@0..4
   ParenExpr@0..4
     LParen@0..1 "("
     VariableRef@1..4
-      Ident@1..4 "foo""#]],
+      Ident@1..4 "foo"
+error at 1..4: expected '+', '-', '*', '/' or ')'"#]],
+        );
+    }
+
+    #[test]
+    fn do_not_parse_operator_if_gettting_rhs_failed() {
+        check(
+            "(1+",
+            expect![[r#"
+Root@0..3
+  ParenExpr@0..3
+    LParen@0..1 "("
+    InfixExpr@1..3
+      Literal@1..2
+        Number@1..2 "1"
+      Plus@2..3 "+"
+error at 2..3: expected number, identifier, '-' or '('
+error at 2..3: expected ')'"#]],
         );
     }
 }
