@@ -64,7 +64,9 @@ impl<'t, 'input> Parser<'t, 'input> {
 
     pub fn error(&mut self) {
         if !self.at_set(&RECOVERY_SET) && !self.at_end() {
+            let m = self.start();
             self.bump();
+            m.complete(self, SyntaxKind::Error);
         }
     }
 }
