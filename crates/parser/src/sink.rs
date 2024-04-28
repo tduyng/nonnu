@@ -4,7 +4,7 @@ use super::event::Event;
 use lexer::Token;
 use rowan::{GreenNodeBuilder, Language};
 use std::mem;
-use syntax::{NonnuLanguage, SyntaxKind};
+use syntax::NonnuLanguage;
 
 pub struct Sink<'t, 'input> {
     pub builder: GreenNodeBuilder<'static>,
@@ -68,7 +68,7 @@ impl<'t, 'input> Sink<'t, 'input> {
 
     fn eat_trivia(&mut self) {
         while let Some(token) = self.tokens.get(self.cursor) {
-            if !SyntaxKind::from(token.kind).is_trivia() {
+            if !token.kind.is_trivia() {
                 break;
             }
 

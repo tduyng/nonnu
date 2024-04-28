@@ -1,6 +1,5 @@
-use lexer::Token;
+use lexer::{Token, TokenKind};
 use rowan::TextRange;
-use syntax::SyntaxKind;
 
 pub struct Source<'t, 'input> {
     tokens: &'t [Token<'input>],
@@ -21,7 +20,7 @@ impl<'t, 'input> Source<'t, 'input> {
         Some(token)
     }
 
-    pub fn peek_kind(&mut self) -> Option<SyntaxKind> {
+    pub fn peek_kind(&mut self) -> Option<TokenKind> {
         self.eat_trivia();
         self.peek_kind_raw()
     }
@@ -33,11 +32,11 @@ impl<'t, 'input> Source<'t, 'input> {
     }
 
     fn at_trivia(&self) -> bool {
-        self.peek_kind_raw().map_or(false, SyntaxKind::is_trivia)
+        self.peek_kind_raw().map_or(false, TokenKind::is_trivia)
     }
 
-    fn peek_kind_raw(&self) -> Option<SyntaxKind> {
-        self.peek_token_raw().map(|Token { kind, .. }| (*kind).into())
+    fn peek_kind_raw(&self) -> Option<TokenKind> {
+        self.peek_token_raw().map(|Token { kind, .. }| *kind)
     }
 
     pub fn peek_token(&mut self) -> Option<&Token> {
