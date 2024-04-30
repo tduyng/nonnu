@@ -130,6 +130,7 @@ name = "nonnu"
 version = "0.1.0"
 dependencies = [
  "ast",
+ "hir",
  "parser",
 ]
 
