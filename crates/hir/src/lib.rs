@@ -5,13 +5,13 @@ use la_arena::Idx;
 
 type ExprIdx = Idx<Expr>;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Stmt {
     VariableDef { name: String, value: Expr },
     Expr(Expr),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Expr {
     Missing,
     Binary { op: BinaryOp, lhs: ExprIdx, rhs: ExprIdx },
@@ -20,7 +20,7 @@ pub enum Expr {
     VariableRef { var: String },
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum BinaryOp {
     Add,
     Sub,
@@ -28,7 +28,7 @@ pub enum BinaryOp {
     Div,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum UnaryOp {
     Neg,
 }
