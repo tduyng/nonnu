@@ -15,7 +15,7 @@ pub enum Stmt {
 pub enum Expr {
     Missing,
     Binary { op: BinaryOp, lhs: ExprIdx, rhs: ExprIdx },
-    Literal { n: u64 },
+    Literal { n: Option<u64> },
     Unary { op: UnaryOp, expr: ExprIdx },
     VariableRef { var: String },
 }
