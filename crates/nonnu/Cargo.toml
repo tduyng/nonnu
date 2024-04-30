@@ -1,9 +1,0 @@
-[package]
-name = "nonnu"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-ast = { path = "../ast" }
-hir = { path = "../hir" }
-parser = { path = "../parser" }
