@@ -25,18 +25,22 @@ impl<'a> Iterator for Lexer<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let kind = self.inner.next()?;
-        let kind = kind.unwrap();
-        let text = self.inner.slice();
+        match kind {
+            Ok(kind) => {
+                let text = self.inner.slice();
 
-        let range = {
-            let StdRange { start, end }: std::ops::Range<usize> = self.inner.span();
-            let start = TextSize::try_from(start).unwrap();
-            let end = TextSize::try_from(end).unwrap();
+                let range = {
+                    let StdRange { start, end }: std::ops::Range<usize> = self.inner.span();
+                    let start = TextSize::try_from(start).unwrap();
+                    let end = TextSize::try_from(end).unwrap();
 
-            TextRange::new(start, end)
-        };
+                    TextRange::new(start, end)
+                };
 
-        Some(Self::Item { kind, text, range })
+                Some(Self::Item { kind, text, range })
+            }
+            Err(_) => None,
+        }
     }
 }
 
