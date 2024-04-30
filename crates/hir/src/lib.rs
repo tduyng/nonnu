@@ -1,7 +1,7 @@
 mod db;
 pub use db::Db;
 
-use arena::Idx;
+use la_arena::Idx;
 
 type ExprIdx = Idx<Expr>;
 

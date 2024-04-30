@@ -3,10 +3,6 @@
 version = 3
 
 [[package]]
-name = "arena"
-version = "0.1.0"
-
-[[package]]
 name = "ast"
 version = "0.1.0"
 dependencies = [
@@ -69,10 +65,16 @@ checksum = "290f1a1d9242c78d09ce40a5e87e7554ee637af1351968159f4952f028f75604"
 name = "hir"
 version = "0.1.0"
 dependencies = [
- "arena",
  "ast",
+ "la-arena",
  "syntax",
 ]
+
+[[package]]
+name = "la-arena"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3752f229dcc5a481d60f385fa479ff46818033d881d2d801aa27dffcfb5e8306"
 
 [[package]]
 name = "lazy_static"
