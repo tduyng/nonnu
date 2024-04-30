@@ -29,8 +29,7 @@ pub struct Parse {
 impl Parse {
     pub fn debug_tree(&self) -> String {
         let mut s = String::new();
-        let syntax_node = SyntaxNode::new_root(self.green_node.clone());
-        let tree = format!("{:#?}", syntax_node);
+        let tree = format!("{:#?}", self.syntax());
 
         s.push_str(&tree[0..tree.len() - 1]);
 
@@ -39,6 +38,10 @@ impl Parse {
         }
 
         s
+    }
+
+    pub fn syntax(&self) -> SyntaxNode {
+        SyntaxNode::new_root(self.green_node.clone())
     }
 }
 

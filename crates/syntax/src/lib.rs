@@ -53,6 +53,8 @@ impl From<TokenKind> for SyntaxKind {
 }
 
 pub type SyntaxNode = rowan::SyntaxNode<NonnuLanguage>;
+pub type SyntaxElement = rowan::SyntaxElement<NonnuLanguage>;
+pub type SyntaxToken = rowan::SyntaxToken<NonnuLanguage>;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum NonnuLanguage {}
