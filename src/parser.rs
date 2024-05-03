@@ -62,8 +62,10 @@ impl Parser {
 	fn parse_procedure(&mut self) -> Definition {
 		self.bump(TokenKind::ProcKw);
 		let name = self.expect_text(TokenKind::Identifier);
-		self.bump(TokenKind::LParen);
+
+		self.expect(TokenKind::LParen);
 		let mut parameters = Vec::new();
+
 		while !self.at_eof() && !self.at(TokenKind::RParen) {
 			let parameter_name = self.expect_text(TokenKind::Identifier);
 			let parameter_ty = self.parse_ty();
@@ -80,9 +82,9 @@ impl Parser {
 			}
 		}
 
-		self.bump(TokenKind::RParen);
-		self.bump(TokenKind::LBrace);
-		self.bump(TokenKind::RBrace);
+		self.expect(TokenKind::RParen);
+		self.expect(TokenKind::LBrace);
+		self.expect(TokenKind::RBrace);
 
 		Definition::Procedure(Procedure { name, parameters })
 	}
@@ -103,7 +105,7 @@ impl Parser {
 
 	fn expect(&mut self, kind: TokenKind) {
 		if !self.eat(kind) {
-			self.error(format!("expect {kind:?} but found {:?}", self.current()))
+			self.error(format!("expected {kind:?} but found {:?}", self.current()));
 		}
 	}
 
@@ -155,7 +157,7 @@ impl Parser {
 		} else {
 			self.tokens[self.cursor].loc.clone()
 		};
-		crate::error(loc, msg)
+		crate::error(loc, msg);
 	}
 }
 
