@@ -11,6 +11,7 @@ pub struct Token {
 pub enum TokenKind {
 	Eof,
 	Identifier,
+	Integer,
 	ProcKw,
 	BangEqual,
 	Bang,
@@ -141,7 +142,14 @@ impl Lexer<'_> {
 				self.tokens.push(Token { kind, text: text.to_string(), loc });
 				return;
 			}
-
+			b'0'..=b'9' => {
+				while self.bytes[self.i].is_ascii_digit() {
+					self.i += 1;
+					self.loc.column += 1;
+				}
+				self.tokens.push(Token { kind: TokenKind::Integer, text: self.text[start..self.i].to_string(), loc });
+				return;
+			}
 			_ => {}
 		}
 
