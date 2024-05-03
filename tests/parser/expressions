@@ -4,7 +4,7 @@ proc expressions()
 	20
 }
 ======
-proc expressions() 
+proc expressions()
 {
 	10
 	20
