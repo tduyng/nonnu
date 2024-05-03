@@ -13,6 +13,7 @@ pub enum TokenKind {
 	Identifier,
 	Integer,
 	ProcKw,
+	VarKw,
 	BangEqual,
 	Bang,
 	Hash,
@@ -85,7 +86,7 @@ pub fn lex(text: &str, file: PathBuf) -> Vec<Token> {
 	Lexer::new(text, file).lex()
 }
 
-const KEYWORDS: &[(&str, TokenKind)] = &[("proc", TokenKind::ProcKw)];
+const KEYWORDS: &[(&str, TokenKind)] = &[("proc", TokenKind::ProcKw), ("var", TokenKind::VarKw)];
 
 struct Lexer<'a> {
 	text: &'a str,
