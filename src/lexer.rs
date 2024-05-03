@@ -7,9 +7,10 @@ pub struct Token {
 	pub loc: Loc,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TokenKind {
 	Identifier,
+	ProcKw,
 	BangEqual,
 	Bang,
 	Hash,
@@ -82,6 +83,8 @@ pub fn lex(text: &str, file: PathBuf) -> Vec<Token> {
 	Lexer::new(text, file).lex()
 }
 
+const KEYWORDS: &[(&str, TokenKind)] = &[("proc", TokenKind::ProcKw)];
+
 struct Lexer<'a> {
 	text: &'a str,
 	bytes: &'a [u8],
@@ -124,12 +127,17 @@ impl Lexer<'_> {
 					self.i += 1;
 					self.loc.column += 1;
 				}
+				let text = &self.text[start..self.i];
+				let mut kind = TokenKind::Identifier;
 
-				self.tokens.push(Token {
-					kind: TokenKind::Identifier,
-					text: self.text[start..self.i].to_string(),
-					loc,
-				});
+				for (keyword_text, keyword_kind) in KEYWORDS {
+					if *keyword_text == text {
+						kind = *keyword_kind;
+						break;
+					}
+				}
+
+				self.tokens.push(Token { kind, text: text.to_string(), loc });
 				return;
 			}
 
