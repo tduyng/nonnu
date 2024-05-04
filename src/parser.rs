@@ -1,6 +1,6 @@
 use std::{cell::Cell, path::PathBuf};
 
-use crate::lexer::{lex, Token, TokenKind};
+use crate::lexer::{lex, Loc, Token, TokenKind};
 
 const INITIAL_FUEL: u8 = 255;
 
@@ -34,16 +34,29 @@ pub struct Parameter {
 }
 
 #[derive(Clone, PartialEq, Eq)]
-pub enum Statement {
+pub struct Statement {
+	kind: StatementKind,
+	loc: Loc,
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub enum StatementKind {
 	Expression(Expression),
 	Block(Vec<Statement>),
 	LocalDeclaration { name: String, ty: Ty },
+	LocalDefinition { name: String, value: Expression },
 	Assignment { lhs: Expression, rhs: Expression },
 	Return { value: Option<Expression> },
 }
 
 #[derive(Clone, PartialEq, Eq)]
-pub enum Expression {
+pub struct Expression {
+	kind: ExpressionKind,
+	loc: Loc,
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub enum ExpressionKind {
 	Integer(u64),
 	Variable(String),
 	True,
@@ -146,47 +159,68 @@ impl Parser {
 			TokenKind::VarKw => self.parse_local_declaration(),
 			TokenKind::ReturnKw => self.parse_return(),
 			TokenKind::LBrace => self.parse_block(),
+			_ if self.lookahead() == TokenKind::ColonEqual => self.parse_local_definition(),
 			_ => {
 				if self.lookahead() == TokenKind::ColonEqual {
 					return self.parse_local_declaration();
 				}
 
+				let loc = self.current_loc();
 				let lhs = self.parse_expression();
 				let operator_kind = self.current();
 				let operator = match assignment_token_kind_to_operator(operator_kind) {
 					Some(op) => op,
-					None => return Statement::Expression(lhs),
+					None => return Statement { kind: StatementKind::Expression(lhs), loc },
 				};
 				self.bump(operator_kind);
 
 				let rhs = self.parse_expression();
 
 				match operator {
-					Some(operator) => Statement::Assignment {
-						lhs: lhs.clone(),
-						rhs: Expression::Binary { lhs: Box::new(lhs), operator, rhs: Box::new(rhs) },
+					Some(operator) => Statement {
+						kind: StatementKind::Assignment {
+							lhs: lhs.clone(),
+							rhs: Expression {
+								kind: ExpressionKind::Binary { lhs: Box::new(lhs), operator, rhs: Box::new(rhs) },
+								loc: loc.clone(),
+							},
+						},
+						loc,
 					},
-					None => Statement::Assignment { lhs, rhs },
+					None => Statement { kind: StatementKind::Assignment { lhs, rhs }, loc },
 				}
 			}
 		}
 	}
 
 	fn parse_local_declaration(&mut self) -> Statement {
+		let loc = self.current_loc();
 		self.bump(TokenKind::VarKw);
 		let name = self.expect_text(TokenKind::Identifier);
 		let ty = self.parse_ty();
-		Statement::LocalDeclaration { name, ty }
+		Statement { kind: StatementKind::LocalDeclaration { name, ty }, loc }
+	}
+
+	fn parse_local_definition(&mut self) -> Statement {
+		let loc = self.current_loc();
+		let name = self.expect_text(TokenKind::Identifier);
+		self.bump(TokenKind::ColonEqual);
+
+		let value = self.parse_expression();
+
+		Statement { kind: StatementKind::LocalDefinition { name, value }, loc }
 	}
 
 	fn parse_return(&mut self) -> Statement {
+		let loc = self.current_loc();
 		self.bump(TokenKind::ReturnKw);
 		let value = if self.at_expression() { Some(self.parse_expression()) } else { None };
 
-		Statement::Return { value }
+		Statement { kind: StatementKind::Return { value }, loc }
 	}
 
 	fn parse_block(&mut self) -> Statement {
+		let loc = self.current_loc();
 		self.bump(TokenKind::LBrace);
 
 		let mut statements = Vec::new();
@@ -196,7 +230,7 @@ impl Parser {
 
 		self.expect(TokenKind::RBrace);
 
-		Statement::Block(statements)
+		Statement { kind: StatementKind::Block(statements), loc }
 	}
 
 	fn parse_expression(&mut self) -> Expression {
@@ -218,7 +252,15 @@ impl Parser {
 				break;
 			}
 			self.bump(operator_kind);
-			lhs = Expression::Binary { lhs: Box::new(lhs), operator, rhs: Box::new(self.parse_expression_bp(right_bp)) }
+			let loc = self.current_loc();
+			lhs = Expression {
+				kind: ExpressionKind::Binary {
+					lhs: Box::new(lhs),
+					operator,
+					rhs: Box::new(self.parse_expression_bp(right_bp)),
+				},
+				loc,
+			}
 		}
 		lhs
 	}
@@ -227,21 +269,25 @@ impl Parser {
 		assert!(self.at_expression());
 		match self.current() {
 			TokenKind::Integer => {
+				let loc = self.current_loc();
 				let text = self.expect_text(TokenKind::Integer);
-				Expression::Integer(text.parse().unwrap())
+				Expression { kind: ExpressionKind::Integer(text.parse().unwrap()), loc }
 			}
 			TokenKind::Identifier => {
+				let loc = self.current_loc();
 				let text = self.expect_text(TokenKind::Identifier);
-				Expression::Variable(text)
+				Expression { kind: ExpressionKind::Variable(text), loc }
 			}
 			TokenKind::TrueKw => {
+				let loc = self.current_loc();
 				self.bump(TokenKind::TrueKw);
-				Expression::True
+				Expression { kind: ExpressionKind::True, loc }
 			}
 
 			TokenKind::FalseKw => {
+				let loc = self.current_loc();
 				self.bump(TokenKind::FalseKw);
-				Expression::False
+				Expression { kind: ExpressionKind::False, loc }
 			}
 			_ => self.error("expected expression".to_string()),
 		}
@@ -300,6 +346,10 @@ impl Parser {
 			return TokenKind::Eof;
 		}
 		self.tokens[self.cursor].kind
+	}
+
+	fn current_loc(&self) -> Loc {
+		self.tokens[self.cursor].loc.clone()
 	}
 
 	fn lookahead(&self) -> TokenKind {
@@ -444,7 +494,7 @@ impl PrettyPrintCtx {
 			self.s(" ");
 		}
 
-		if proc.body == Statement::Block(Vec::new()) {
+		if proc.body.kind == StatementKind::Block(Vec::new()) {
 			if proc.return_ty.is_none() {
 				self.s(" ");
 			}
@@ -458,15 +508,20 @@ impl PrettyPrintCtx {
 	}
 
 	fn print_statement(&mut self, statement: &Statement) {
-		match statement {
-			Statement::LocalDeclaration { name, ty } => {
+		match &statement.kind {
+			StatementKind::LocalDeclaration { name, ty } => {
 				self.s("var ");
 				self.s(name);
 				self.s(" ");
 				self.print_ty(ty);
 			}
-			Statement::Expression(e) => self.print_expression(e),
-			Statement::Return { value } => {
+			StatementKind::LocalDefinition { name, value } => {
+				self.s(name);
+				self.s(" := ");
+				self.print_expression(value);
+			}
+			StatementKind::Expression(e) => self.print_expression(e),
+			StatementKind::Return { value } => {
 				self.s("return");
 
 				if let Some(value) = value {
@@ -475,7 +530,7 @@ impl PrettyPrintCtx {
 				}
 			}
 
-			Statement::Block(statements) => {
+			StatementKind::Block(statements) => {
 				self.s("{");
 				self.indentation += 1;
 
@@ -488,7 +543,7 @@ impl PrettyPrintCtx {
 				self.newline();
 				self.s("}");
 			}
-			Statement::Assignment { lhs, rhs } => {
+			StatementKind::Assignment { lhs, rhs } => {
 				self.print_expression(lhs);
 				self.s(" = ");
 				self.print_expression(rhs);
@@ -497,12 +552,12 @@ impl PrettyPrintCtx {
 	}
 
 	fn print_expression(&mut self, expression: &Expression) {
-		match expression {
-			Expression::Integer(i) => self.s(&format!("{i}")),
-			Expression::Variable(name) => self.s(name),
-			Expression::True => self.s("true"),
-			Expression::False => self.s("false"),
-			Expression::Binary { lhs, operator, rhs } => {
+		match &expression.kind {
+			ExpressionKind::Integer(i) => self.s(&format!("{i}")),
+			ExpressionKind::Variable(name) => self.s(name),
+			ExpressionKind::True => self.s("true"),
+			ExpressionKind::False => self.s("false"),
+			ExpressionKind::Binary { lhs, operator, rhs } => {
 				self.s("(");
 				self.print_expression(lhs);
 				self.s(" ");
