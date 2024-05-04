@@ -302,14 +302,17 @@ fn token_kind_to_operator(kind: TokenKind) -> Option<BinaryOperator> {
 
 fn operator_to_bp(operator: BinaryOperator) -> u8 {
 	match operator {
-		BinaryOperator::Multiply
-		| BinaryOperator::Divide
-		| BinaryOperator::Modulo
-		| BinaryOperator::ShiftLeft
-		| BinaryOperator::ShiftRight
-		| BinaryOperator::BitAnd => 5,
+		BinaryOperator::ShiftLeft | BinaryOperator::ShiftRight => 9,
 
-		BinaryOperator::Add | BinaryOperator::Subtract | BinaryOperator::BitOr | BinaryOperator::BitXor => 4,
+		BinaryOperator::BitAnd => 8,
+
+		BinaryOperator::BitXor => 7,
+
+		BinaryOperator::Multiply | BinaryOperator::Divide | BinaryOperator::Modulo => 6,
+
+		BinaryOperator::Add | BinaryOperator::Subtract => 5,
+
+		BinaryOperator::BitOr => 4,
 
 		BinaryOperator::Equal
 		| BinaryOperator::NotEqual
