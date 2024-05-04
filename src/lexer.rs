@@ -13,6 +13,7 @@ pub enum TokenKind {
 	Identifier,
 	Integer,
 	ProcKw,
+	StructKw,
 	VarKw,
 	TrueKw,
 	FalseKw,
@@ -92,6 +93,7 @@ pub fn lex(text: &str, file: PathBuf) -> Vec<Token> {
 
 const KEYWORDS: &[(&str, TokenKind)] = &[
 	("proc", TokenKind::ProcKw),
+	("struct", TokenKind::StructKw),
 	("var", TokenKind::VarKw),
 	("true", TokenKind::TrueKw),
 	("false", TokenKind::FalseKw),
