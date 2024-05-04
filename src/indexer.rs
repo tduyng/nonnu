@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::ast;
+use crate::{ast, lexer::Loc};
 
 pub fn index(ast: &ast::Ast) -> Index {
 	Indexer::default().index(ast)
@@ -9,6 +9,7 @@ pub fn index(ast: &ast::Ast) -> Index {
 #[derive(Clone, PartialEq, Eq, Default)]
 pub struct Index {
 	pub procedures: HashMap<String, Procedure>,
+	pub tys: HashMap<String, TyDefinition>,
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -24,7 +25,29 @@ pub struct Parameter {
 }
 
 #[derive(Clone, PartialEq, Eq)]
-pub enum Ty {
+pub enum TyDefinition {
+	Struct(Struct),
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub struct Struct {
+	pub fields: Vec<Field>,
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub struct Field {
+	pub name: String,
+	pub ty: Ty,
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub struct Ty {
+	pub kind: TyKind,
+	pub loc: Loc,
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub enum TyKind {
 	Int,
 }
 
@@ -48,19 +71,28 @@ impl Indexer {
 				let mut parameters = Vec::new();
 
 				for parameter in &proc.parameters {
-					parameters.push(Parameter { name: parameter.name.clone(), ty: Ty::Int });
+					parameters.push(Parameter { name: parameter.name.clone(), ty: self.index_ty(&parameter.ty) });
 				}
 
 				let return_ty = proc.return_ty.as_ref().map(|t| self.index_ty(t));
 
 				self.index.procedures.insert(proc.name.clone(), Procedure { parameters, return_ty });
 			}
+			ast::Definition::Struct(stru) => {
+				let mut fields = Vec::new();
+
+				for field in &stru.fields {
+					fields.push(Field { name: field.name.clone(), ty: self.index_ty(&field.ty) });
+				}
+
+				self.index.tys.insert(stru.name.clone(), TyDefinition::Struct(Struct { fields }));
+			}
 		}
 	}
 
 	fn index_ty(&mut self, ty: &ast::Ty) -> Ty {
-		match ty {
-			ast::Ty::Int => Ty::Int,
+		match &ty.kind {
+			ast::TyKind::Int => Ty { kind: TyKind::Int, loc: ty.loc.clone() },
 		}
 	}
 }

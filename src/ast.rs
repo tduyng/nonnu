@@ -8,6 +8,7 @@ pub struct Ast {
 #[derive(Clone, PartialEq, Eq)]
 pub enum Definition {
 	Procedure(Procedure),
+	Struct(Struct),
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -20,6 +21,18 @@ pub struct Procedure {
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct Parameter {
+	pub name: String,
+	pub ty: Ty,
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub struct Struct {
+	pub name: String,
+	pub fields: Vec<Field>,
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub struct Field {
 	pub name: String,
 	pub ty: Ty,
 }
@@ -78,7 +91,13 @@ pub enum BinaryOperator {
 }
 
 #[derive(Clone, PartialEq, Eq)]
-pub enum Ty {
+pub struct Ty {
+	pub kind: TyKind,
+	pub loc: Loc,
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub enum TyKind {
 	Int,
 }
 
@@ -100,6 +119,7 @@ impl PrettyPrintCtx {
 		for definition in &ast.definitions {
 			match definition {
 				Definition::Procedure(proc) => self.print_procedure(proc),
+				Definition::Struct(struc) => self.print_struct(struc),
 			}
 		}
 	}
@@ -138,6 +158,26 @@ impl PrettyPrintCtx {
 		}
 
 		self.newline()
+	}
+
+	fn print_struct(&mut self, struc: &Struct) {
+		self.s("struct ");
+		self.s(&struc.name);
+		self.newline();
+		self.s("{");
+		self.indentation += 1;
+
+		for field in &struc.fields {
+			self.newline();
+			self.s(&field.name);
+			self.s(" ");
+			self.print_ty(&field.ty);
+		}
+
+		self.indentation -= 1;
+		self.newline();
+		self.s("}");
+		self.newline();
 	}
 
 	fn print_statement(&mut self, statement: &Statement) {
@@ -225,8 +265,8 @@ impl PrettyPrintCtx {
 	}
 
 	fn print_ty(&mut self, ty: &Ty) {
-		match ty {
-			Ty::Int => self.s("int"),
+		match &ty.kind {
+			TyKind::Int => self.s("int"),
 		}
 	}
 

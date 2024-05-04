@@ -9,6 +9,7 @@ pub fn resolve(index: &indexer::Index) -> Index {
 #[derive(Clone, PartialEq, Eq, Default)]
 pub struct Index {
 	pub procedures: HashMap<String, Procedure>,
+	pub named_tys: HashMap<String, NamedTy>,
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -24,6 +25,22 @@ pub struct Parameter {
 }
 
 #[derive(Clone, PartialEq, Eq)]
+pub enum NamedTy {
+	Struct(Struct),
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub struct Struct {
+	pub fields: Vec<Field>,
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub struct Field {
+	pub name: String,
+	pub ty: Ty,
+}
+
+#[derive(Clone, PartialEq, Eq)]
 pub enum Ty {
 	Int,
 }
@@ -31,15 +48,19 @@ pub enum Ty {
 #[derive(Default)]
 struct Resolver {
 	procedures: HashMap<String, Procedure>,
+	named_tys: HashMap<String, NamedTy>,
 }
 
 impl Resolver {
 	fn resolve(mut self, index: &indexer::Index) -> Index {
+		for (name, ty) in &index.tys {
+			self.resolve_ty_definition(name, ty);
+		}
 		for (name, procedure) in &index.procedures {
 			self.resolve_procedure(name, procedure);
 		}
 
-		Index { procedures: self.procedures }
+		Index { procedures: self.procedures, named_tys: self.named_tys }
 	}
 
 	fn resolve_procedure(&mut self, name: &str, procedure: &indexer::Procedure) {
@@ -54,9 +75,23 @@ impl Resolver {
 		self.procedures.insert(name.to_string(), Procedure { parameters, return_ty });
 	}
 
+	fn resolve_ty_definition(&mut self, name: &str, ty_definition: &indexer::TyDefinition) {
+		match ty_definition {
+			indexer::TyDefinition::Struct(struc) => {
+				let mut fields = Vec::new();
+
+				for field in &struc.fields {
+					fields.push(Field { name: field.name.clone(), ty: self.resolve_ty(&field.ty) });
+				}
+
+				self.named_tys.insert(name.to_string(), NamedTy::Struct(Struct { fields }));
+			}
+		}
+	}
+
 	fn resolve_ty(&mut self, ty: &indexer::Ty) -> Ty {
-		match ty {
-			indexer::Ty::Int => Ty::Int,
+		match &ty.kind {
+			indexer::TyKind::Int => Ty::Int,
 		}
 	}
 }
@@ -91,6 +126,27 @@ impl Index {
 			}
 
 			s.push('\n');
+		}
+
+		let mut named_tys: Vec<_> = self.named_tys.iter().collect();
+		named_tys.sort_by_key(|(name, _)| *name);
+
+		for (name, ty) in named_tys {
+			match ty {
+				NamedTy::Struct(struc) => {
+					s.push_str("struct ");
+					s.push_str(name);
+					s.push_str("\n{");
+
+					for field in &struc.fields {
+						s.push_str("\n\t");
+						s.push_str(&field.name);
+						s.push(' ');
+						pretty_print_ty(&field.ty, &mut s)
+					}
+					s.push_str("\n}\n");
+				}
+			}
 		}
 
 		s

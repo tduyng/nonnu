@@ -1,6 +1,7 @@
 use crate::{
 	ast::{
-		Ast, BinaryOperator, Definition, Expression, ExpressionKind, Parameter, Procedure, Statement, StatementKind, Ty,
+		Ast, BinaryOperator, Definition, Expression, ExpressionKind, Field, Parameter, Procedure, Statement,
+		StatementKind, Struct, Ty, TyKind,
 	},
 	lexer::{lex, Loc, Token, TokenKind},
 };
@@ -37,6 +38,7 @@ impl Parser {
 	fn parse_definition(&mut self) -> Definition {
 		match self.current() {
 			TokenKind::ProcKw => self.parse_procedure(),
+			TokenKind::StructKw => self.parse_struct(),
 			_ => self.error("expected definition".to_string()),
 		}
 	}
@@ -74,6 +76,23 @@ impl Parser {
 		let body = self.parse_block();
 
 		Definition::Procedure(Procedure { name, parameters, return_ty, body })
+	}
+
+	fn parse_struct(&mut self) -> Definition {
+		self.bump(TokenKind::StructKw);
+		let name = self.expect_text(TokenKind::Identifier);
+		self.expect(TokenKind::LBrace);
+		let mut fields = Vec::new();
+
+		while !self.at_eof() && !self.at(TokenKind::RBrace) {
+			let field_name = self.expect_text(TokenKind::Identifier);
+			let field_ty = self.parse_ty();
+			fields.push(Field { name: field_name, ty: field_ty });
+		}
+
+		self.expect(TokenKind::RBrace);
+
+		Definition::Struct(Struct { name, fields })
 	}
 
 	fn parse_statement(&mut self) -> Statement {
@@ -216,9 +235,10 @@ impl Parser {
 	}
 
 	fn parse_ty(&mut self) -> Ty {
+		let loc = self.current_loc();
 		let text = self.expect_text(TokenKind::Identifier);
 		match text.as_str() {
-			"int" => Ty::Int,
+			"int" => Ty { kind: TyKind::Int, loc },
 			_ => self.error("expected type".to_string()),
 		}
 	}
