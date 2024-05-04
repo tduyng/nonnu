@@ -49,6 +49,7 @@ pub struct Ty {
 #[derive(Clone, PartialEq, Eq)]
 pub enum TyKind {
 	Int,
+	Bool,
 	Named(String),
 }
 
@@ -95,6 +96,7 @@ impl Indexer {
 		let loc = ty.loc.clone();
 		match &ty.kind {
 			ast::TyKind::Int => Ty { kind: TyKind::Int, loc },
+			ast::TyKind::Bool => Ty { kind: TyKind::Bool, loc },
 			ast::TyKind::Named(n) => Ty { kind: TyKind::Named(n.clone()), loc },
 		}
 	}

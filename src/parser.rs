@@ -239,6 +239,7 @@ impl Parser {
 		let text = self.expect_text(TokenKind::Identifier);
 		match text.as_str() {
 			"int" => Ty { kind: TyKind::Int, loc },
+			"bool" => Ty { kind: TyKind::Bool, loc },
 			_ => Ty { kind: TyKind::Named(text), loc },
 		}
 	}

@@ -14,8 +14,8 @@ pub struct Index {
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct Procedure {
-	parameters: Vec<Parameter>,
-	return_ty: Option<Ty>,
+	pub parameters: Vec<Parameter>,
+	pub return_ty: Option<Ty>,
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -43,6 +43,7 @@ pub struct Field {
 #[derive(Clone, PartialEq, Eq)]
 pub enum Ty {
 	Int,
+	Bool,
 	Named(String),
 }
 
@@ -98,6 +99,7 @@ impl Resolver<'_> {
 	fn resolve_ty(&mut self, ty: &indexer::Ty) -> Ty {
 		match &ty.kind {
 			indexer::TyKind::Int => Ty::Int,
+			indexer::TyKind::Bool => Ty::Bool,
 			indexer::TyKind::Named(n) => {
 				let n = n.clone();
 				if !self.named_tys.contains_key(&n) {
@@ -185,6 +187,7 @@ impl fmt::Display for Ty {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		match self {
 			Ty::Int => write!(f, "int"),
+			Ty::Bool => write!(f, "bool"),
 			Ty::Named(name) => write!(f, "{name}"),
 		}
 	}
