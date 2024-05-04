@@ -74,14 +74,14 @@ pub enum TokenKind {
 	Tilde,
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Loc {
 	pub line: usize,
 	pub column: usize,
 	pub file: PathBuf,
 }
 
-impl fmt::Debug for Loc {
+impl fmt::Display for Loc {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(f, "{}:{}:{}", self.file.display(), self.line, self.column)
 	}
@@ -257,7 +257,7 @@ fn tests() {
 		let mut s = String::new();
 
 		for token in tokens {
-			writeln!(s, "{:?} {:?} {:?}", token.kind, token.loc, token.text).unwrap();
+			writeln!(s, "{:?} {} {:?}", token.kind, token.loc, token.text).unwrap();
 		}
 
 		s

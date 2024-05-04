@@ -5,7 +5,7 @@ pub mod parser;
 pub mod resolver;
 
 fn error(loc: lexer::Loc, msg: String) -> ! {
-	panic!("{:?}: error: {}\n", loc, msg);
+	panic!("{loc}: error: {msg}\n");
 }
 
 #[cfg(test)]
