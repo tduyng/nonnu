@@ -117,6 +117,10 @@ impl Index {
 		procedures.sort_by_key(|(name, _)| *name);
 
 		for (name, procedure) in procedures {
+			if !s.is_empty() {
+				s.push('\n');
+			}
+
 			s.push_str("proc ");
 			s.push_str(name);
 			s.push('(');
@@ -145,6 +149,10 @@ impl Index {
 		named_tys.sort_by_key(|(name, _)| *name);
 
 		for (name, ty) in named_tys {
+			if !s.is_empty() {
+				s.push('\n');
+			}
+
 			match ty {
 				NamedTy::Struct(struc) => {
 					s.push_str("struct ");
