@@ -19,7 +19,7 @@ Zira is an experimental programming language written in Rust, designed as a lear
 
 ## Features (Planned and WIP)
 
-- [ ] Lexer: Tokenize Zira code
+- [x] Lexer: Tokenize Zira code
 - [ ] Parser: Construct an AST
 - [ ] Basic arithmetic expressions
 - [ ] Variables and assignments
