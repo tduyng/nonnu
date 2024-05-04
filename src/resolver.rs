@@ -1,6 +1,6 @@
-use indexmap::IndexMap;
-
 use crate::indexer;
+use indexmap::IndexMap;
+use std::fmt;
 
 pub fn resolve(index: &indexer::Index) -> Index {
 	Resolver::new(index).resolve()
@@ -142,14 +142,14 @@ impl Index {
 
 				s.push_str(&parameter.name);
 				s.push(' ');
-				pretty_print_ty(&parameter.ty, &mut s);
+				s.push_str(&parameter.ty.to_string());
 			}
 
 			s.push(')');
 
 			if let Some(return_ty) = &procedure.return_ty {
 				s.push(' ');
-				pretty_print_ty(return_ty, &mut s);
+				s.push_str(&return_ty.to_string())
 			}
 
 			s.push('\n');
@@ -170,7 +170,7 @@ impl Index {
 						s.push_str("\n\t");
 						s.push_str(&field.name);
 						s.push(' ');
-						pretty_print_ty(&field.ty, &mut s)
+						s.push_str(&field.ty.to_string());
 					}
 					s.push_str("\n}\n");
 				}
@@ -181,10 +181,12 @@ impl Index {
 	}
 }
 
-fn pretty_print_ty(ty: &Ty, s: &mut String) {
-	match ty {
-		Ty::Int => s.push_str("int"),
-		Ty::Named(n) => s.push_str(n),
+impl fmt::Display for Ty {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		match self {
+			Ty::Int => write!(f, "int"),
+			Ty::Named(name) => write!(f, "{name}"),
+		}
 	}
 }
 
