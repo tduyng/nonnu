@@ -2,10 +2,14 @@ proc statements()
 {
     var a int
 	var b int
+	a = c
+	a /= b
 }
 ======
 proc statements()
 {
 	var a int
 	var b int
+	a = c
+	a = (a / b)
 }

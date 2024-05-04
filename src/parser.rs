@@ -38,6 +38,7 @@ pub enum Statement {
 	Expression(Expression),
 	Block(Vec<Statement>),
 	LocalDeclaration { name: String, ty: Ty },
+	Assignment { lhs: Expression, rhs: Expression },
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -141,7 +142,29 @@ impl Parser {
 		match self.current() {
 			TokenKind::VarKw => self.parse_local_declaration(),
 			TokenKind::LBrace => self.parse_block(),
-			_ => Statement::Expression(self.parse_expression()),
+			_ => {
+				if self.lookahead() == TokenKind::ColonEqual {
+					return self.parse_local_declaration();
+				}
+
+				let lhs = self.parse_expression();
+				let operator_kind = self.current();
+				let operator = match assignment_token_kind_to_operator(operator_kind) {
+					Some(op) => op,
+					None => return Statement::Expression(lhs),
+				};
+				self.bump(operator_kind);
+
+				let rhs = self.parse_expression();
+
+				match operator {
+					Some(operator) => Statement::Assignment {
+						lhs: lhs.clone(),
+						rhs: Expression::Binary { lhs: Box::new(lhs), operator, rhs: Box::new(rhs) },
+					},
+					None => Statement::Assignment { lhs, rhs },
+				}
+			}
 		}
 	}
 
@@ -327,6 +350,30 @@ fn operator_to_bp(operator: BinaryOperator) -> u8 {
 	}
 }
 
+fn assignment_token_kind_to_operator(kind: TokenKind) -> Option<Option<BinaryOperator>> {
+	if kind == TokenKind::Equal {
+		return Some(None);
+	}
+
+	let operator = match kind {
+		TokenKind::PlusEqual => BinaryOperator::Add,
+		TokenKind::MinusEqual => BinaryOperator::Subtract,
+		TokenKind::StarEqual => BinaryOperator::Multiply,
+		TokenKind::SlashEqual => BinaryOperator::Divide,
+		TokenKind::PercentEqual => BinaryOperator::Modulo,
+		TokenKind::LessLessEqual => BinaryOperator::ShiftLeft,
+		TokenKind::GreaterGreaterEqual => BinaryOperator::ShiftRight,
+		TokenKind::AndEqual => BinaryOperator::BitAnd,
+		TokenKind::PipeEqual => BinaryOperator::BitOr,
+		TokenKind::CaretEqual => BinaryOperator::BitXor,
+		TokenKind::AndAndEqual => BinaryOperator::And,
+		TokenKind::PipePipeEqual => BinaryOperator::Or,
+		_ => return None,
+	};
+
+	Some(Some(operator))
+}
+
 impl Ast {
 	pub fn pretty_print(&self) -> String {
 		let mut ctx = PrettyPrintCtx { buf: String::new(), indentation: 0 };
@@ -406,6 +453,11 @@ impl PrettyPrintCtx {
 				self.indentation -= 1;
 				self.newline();
 				self.s("}");
+			}
+			Statement::Assignment { lhs, rhs } => {
+				self.print_expression(lhs);
+				self.s(" = ");
+				self.print_expression(rhs);
 			}
 		}
 	}
