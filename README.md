@@ -6,7 +6,6 @@ Zira is an experimental programming language written in Rust, designed as a lear
 
 - Purpose: Zira is primarily a learning project, offering insights into programming language mechanics.
 - Inspiration: Inspired and learned from [Eldiro project](https://github.com/lunacookies/eldiro). Thank [Aramis](https://xoria.org/) for [your excellent works](https://lunacookies.github.io/lang/).
-- Licence: [MIT](./LICENCE)
 
 ## Cool ideas for Zira
 
