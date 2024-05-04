@@ -39,6 +39,7 @@ pub enum Statement {
 	Block(Vec<Statement>),
 	LocalDeclaration { name: String, ty: Ty },
 	Assignment { lhs: Expression, rhs: Expression },
+	Return { value: Option<Expression> },
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -143,6 +144,7 @@ impl Parser {
 	fn parse_statement(&mut self) -> Statement {
 		match self.current() {
 			TokenKind::VarKw => self.parse_local_declaration(),
+			TokenKind::ReturnKw => self.parse_return(),
 			TokenKind::LBrace => self.parse_block(),
 			_ => {
 				if self.lookahead() == TokenKind::ColonEqual {
@@ -175,6 +177,13 @@ impl Parser {
 		let name = self.expect_text(TokenKind::Identifier);
 		let ty = self.parse_ty();
 		Statement::LocalDeclaration { name, ty }
+	}
+
+	fn parse_return(&mut self) -> Statement {
+		self.bump(TokenKind::ReturnKw);
+		let value = if self.at_expression() { Some(self.parse_expression()) } else { None };
+
+		Statement::Return { value }
 	}
 
 	fn parse_block(&mut self) -> Statement {
@@ -215,6 +224,7 @@ impl Parser {
 	}
 
 	fn parse_atom(&mut self) -> Expression {
+		assert!(self.at_expression());
 		match self.current() {
 			TokenKind::Integer => {
 				let text = self.expect_text(TokenKind::Integer);
@@ -269,6 +279,10 @@ impl Parser {
 		assert!(self.at(kind));
 		self.cursor += 1;
 		self.fuel.set(INITIAL_FUEL);
+	}
+
+	fn at_expression(&self) -> bool {
+		matches!(self.current(), TokenKind::Integer | TokenKind::Identifier | TokenKind::TrueKw | TokenKind::FalseKw)
 	}
 
 	fn at(&self, kind: TokenKind) -> bool {
@@ -452,6 +466,15 @@ impl PrettyPrintCtx {
 				self.print_ty(ty);
 			}
 			Statement::Expression(e) => self.print_expression(e),
+			Statement::Return { value } => {
+				self.s("return");
+
+				if let Some(value) = value {
+					self.s(" ");
+					self.print_expression(value);
+				}
+			}
+
 			Statement::Block(statements) => {
 				self.s("{");
 				self.indentation += 1;

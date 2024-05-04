@@ -4,6 +4,8 @@ proc statements()
 	var b int
 	a = c
 	a /= b
+	return
+	return foo
 }
 ======
 proc statements()
@@ -12,4 +14,6 @@ proc statements()
 	var b int
 	a = c
 	a = (a / b)
+	return
+	return foo
 }
