@@ -78,6 +78,10 @@ impl SemaContext<'_> {
 				Statement::Assignment { lhs: self.alloc_expression(Expression::Variable(variable)), rhs: value }
 			}
 
+			ast::StatementKind::If { condition, true_branch, false_branch } => {
+				todo!()
+			}
+
 			ast::StatementKind::Return { value } => {
 				let value = value.as_ref().map(|e| self.analyze_expression(e));
 				Statement::Return { value }

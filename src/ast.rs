@@ -51,6 +51,7 @@ pub enum StatementKind {
 	Block(Vec<Statement>),
 	LocalDeclaration { name: String, ty: Ty },
 	LocalDefinition { name: String, value: Expression },
+	If { condition: Expression, true_branch: Box<Statement>, false_branch: Option<Box<Statement>> },
 	Assignment { lhs: Expression, rhs: Expression },
 	Return { value: Option<Expression> },
 }
@@ -191,6 +192,16 @@ impl PrettyPrintCtx {
 				self.s(name);
 				self.s(" := ");
 				self.print_expression(value);
+			}
+			StatementKind::If { condition, true_branch, false_branch } => {
+				self.s("if ");
+				self.print_expression(condition);
+				self.s(" ");
+				self.print_statement(true_branch);
+				if let Some(false_branch) = false_branch {
+					self.s(" else ");
+					self.print_statement(false_branch);
+				}
 			}
 			StatementKind::Expression(e) => self.print_expression(e),
 			StatementKind::Return { value } => {
