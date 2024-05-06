@@ -99,6 +99,8 @@ impl Parser {
 		match self.current() {
 			TokenKind::VarKw => self.parse_local_declaration(),
 			TokenKind::IfKw => self.parse_if(),
+			TokenKind::ForKw => self.parse_loop(),
+			TokenKind::BreakKw => self.parse_break(),
 			TokenKind::ReturnKw => self.parse_return(),
 			TokenKind::LBrace => self.parse_block(),
 			_ if self.lookahead() == TokenKind::ColonEqual => self.parse_local_definition(),
@@ -169,6 +171,19 @@ impl Parser {
 			},
 			loc,
 		}
+	}
+
+	fn parse_loop(&mut self) -> Statement {
+		let loc = self.current_loc();
+		self.bump(TokenKind::ForKw);
+		let body = self.parse_block();
+		Statement { kind: StatementKind::Loop { body: Box::new(body) }, loc }
+	}
+
+	fn parse_break(&mut self) -> Statement {
+		let loc = self.current_loc();
+		self.bump(TokenKind::BreakKw);
+		Statement { kind: StatementKind::Break, loc }
 	}
 
 	fn parse_return(&mut self) -> Statement {

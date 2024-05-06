@@ -52,6 +52,8 @@ pub enum StatementKind {
 	LocalDeclaration { name: String, ty: Ty },
 	LocalDefinition { name: String, value: Expression },
 	If { condition: Expression, true_branch: Box<Statement>, false_branch: Option<Box<Statement>> },
+	Loop { body: Box<Statement> },
+	Break,
 	Assignment { lhs: Expression, rhs: Expression },
 	Return { value: Option<Expression> },
 }
@@ -203,7 +205,14 @@ impl PrettyPrintCtx {
 					self.print_statement(false_branch);
 				}
 			}
-			StatementKind::Expression(e) => self.print_expression(e),
+
+			StatementKind::Loop { body } => {
+				self.s("for ");
+				self.print_statement(body);
+			}
+
+			StatementKind::Break => self.s("break"),
+
 			StatementKind::Return { value } => {
 				self.s("return");
 
@@ -226,6 +235,9 @@ impl PrettyPrintCtx {
 				self.newline();
 				self.s("}");
 			}
+
+			StatementKind::Expression(e) => self.print_expression(e),
+
 			StatementKind::Assignment { lhs, rhs } => {
 				self.print_expression(lhs);
 				self.s(" = ");

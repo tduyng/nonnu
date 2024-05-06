@@ -96,6 +96,10 @@ impl SemaContext<'_> {
 				Statement::If { condition: condition_idx, true_branch: true_branch_idx, false_branch: false_branch_idx }
 			}
 
+			ast::StatementKind::Loop { body } => todo!(),
+
+			ast::StatementKind::Break => todo!(),
+
 			ast::StatementKind::Return { value } => {
 				let value = value.as_ref().map(|e| self.analyze_expression(e));
 				Statement::Return { value }
