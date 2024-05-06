@@ -4,6 +4,7 @@ use la_arena::{ArenaMap, Idx};
 use crate::{
 	ast,
 	hir::{BodyStorage, Expression, Hir, Procedure, Statement, Variable},
+	lexer::Loc,
 	resolver::{self, Index, Ty},
 };
 
@@ -49,8 +50,11 @@ impl SemaContext<'_> {
 		self.push_scope();
 
 		for parameter in &self.procedure.parameters {
-			let variable =
-				self.storage.variables.alloc(Variable { name: parameter.name.clone(), ty: parameter.ty.clone() });
+			let variable = self.storage.variables.alloc(Variable {
+				name: parameter.name.clone(),
+				ty: parameter.ty.clone(),
+				is_parameter: true,
+			});
 			self.insert_into_scopes(parameter.name.clone(), variable);
 		}
 
@@ -63,7 +67,7 @@ impl SemaContext<'_> {
 		let s = match &statement.kind {
 			ast::StatementKind::LocalDeclaration { name, ty } => {
 				let ty = self.resolve_ty(ty);
-				let variable = self.alloc_variable(Variable { name: name.clone(), ty });
+				let variable = self.alloc_variable(Variable { name: name.clone(), ty, is_parameter: false });
 
 				if self.lookup_in_scopes(name).is_some() {
 					crate::error(statement.loc.clone(), format!("cannot re-declare variable “{name}”"));
@@ -77,7 +81,7 @@ impl SemaContext<'_> {
 			ast::StatementKind::LocalDefinition { name, value } => {
 				let value = self.analyze_expression(value);
 				let ty = self.expression_tys[value].clone();
-				let variable = self.alloc_variable(Variable { name: name.clone(), ty });
+				let variable = self.alloc_variable(Variable { name: name.clone(), ty, is_parameter: false });
 
 				if self.lookup_in_scopes(name).is_some() {
 					crate::error(statement.loc.clone(), format!("cannot re-declare variable “{name}”"));
@@ -164,7 +168,13 @@ impl SemaContext<'_> {
 				Statement::Block(idxs)
 			}
 
-			ast::StatementKind::Expression(e) => Statement::Expression(self.analyze_expression(e)),
+			ast::StatementKind::Expression(e) => match &e.kind {
+				ast::ExpressionKind::Call { name, arguments } => {
+					let (arguments, _return_ty) = self.analyze_call(name, arguments, &e.loc);
+					Statement::Call { name: name.clone(), arguments }
+				}
+				_ => Statement::Expression(self.analyze_expression(e)),
+			},
 
 			ast::StatementKind::Assignment { lhs, rhs } => {
 				let lhs_idx = self.analyze_expression(lhs);
@@ -195,7 +205,17 @@ impl SemaContext<'_> {
 				None => crate::error(expression.loc.clone(), format!("undefined variable “{name}”",)),
 			},
 
-			ast::ExpressionKind::Call { name, arguments } => todo!(),
+			ast::ExpressionKind::Call { name, arguments } => {
+				let (arguments, return_ty) = self.analyze_call(name, arguments, &expression.loc);
+
+				match return_ty {
+					Some(t) => (Expression::Call { name: name.clone(), arguments }, t.clone()),
+					None => crate::error(
+						expression.loc.clone(),
+						format!("cannot call procedure “{name}” in expression since it does not return a value"),
+					),
+				}
+			}
 
 			ast::ExpressionKind::True => (Expression::True, Ty::Bool),
 			ast::ExpressionKind::False => (Expression::False, Ty::Bool),
@@ -228,6 +248,47 @@ impl SemaContext<'_> {
 		let idx = self.alloc_expression(e);
 		self.expression_tys.insert(idx, ty);
 		idx
+	}
+
+	fn analyze_call(
+		&mut self,
+		name: &str,
+		arguments: &[ast::Expression],
+		loc: &Loc,
+	) -> (Vec<Idx<Expression>>, Option<&Ty>) {
+		let procedure = match self.index.procedures.get(name) {
+			Some(p) => p,
+			None => crate::error(loc.clone(), format!("undefined procedure “{name}”")),
+		};
+
+		if procedure.parameters.len() != arguments.len() {
+			crate::error(
+				loc.clone(),
+				format!(
+					"“{name}” expected {} arguments but {} were provided",
+					procedure.parameters.len(),
+					arguments.len()
+				),
+			);
+		}
+
+		let mut argument_idxs = Vec::new();
+
+		for (argument, parameter) in arguments.iter().zip(&procedure.parameters) {
+			let idx = self.analyze_expression(argument);
+			let argument_ty = &self.expression_tys[idx];
+
+			if argument_ty != &parameter.ty {
+				crate::error(
+					argument.loc.clone(),
+					format!("“{}” argument was expected but “{argument_ty}” was provided", parameter.ty),
+				);
+			}
+
+			argument_idxs.push(idx);
+		}
+
+		(argument_idxs, procedure.return_ty.as_ref())
 	}
 
 	fn resolve_ty(&mut self, ty: &ast::Ty) -> Ty {

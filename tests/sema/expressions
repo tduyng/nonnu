@@ -5,17 +5,30 @@ proc expressions(parameter int)
 	false
 	a := 92
 	a + 2 * 3 * 4 * 5
-	parameter
+	b := add(9, 2)
+}
+
+proc add(x int, y int) int
+{
+	return x + y
 }
 ======
 proc expressions
-	var parameter int
+	param parameter int
 	var a int
+	var b int
 {
 	10
 	true
 	false
 	a = 92
 	(a + (((2 * 3) * 4) * 5))
-	parameter
+	b = add(9, 2)
+}
+
+proc add
+	param x int
+	param y int
+{
+	return (x + y)
 }

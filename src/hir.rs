@@ -25,6 +25,7 @@ pub struct BodyStorage {
 pub struct Variable {
 	pub name: String,
 	pub ty: Ty,
+	pub is_parameter: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -36,12 +37,14 @@ pub enum Statement {
 	Return { value: Option<Idx<Expression>> },
 	Block(Vec<Idx<Statement>>),
 	Expression(Idx<Expression>),
+	Call { name: String, arguments: Vec<Idx<Expression>> },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Expression {
 	Integer(u64),
 	Variable(Idx<Variable>),
+	Call { name: String, arguments: Vec<Idx<Expression>> },
 	True,
 	False,
 	Binary { lhs: Idx<Expression>, rhs: Idx<Expression>, op: ast::BinaryOperator },
@@ -79,7 +82,11 @@ impl PrettyPrintCtx {
 
 		for (_, variable) in proc.storage.variables.iter() {
 			self.newline();
-			self.s("var ");
+			if variable.is_parameter {
+				self.s("param ");
+			} else {
+				self.s("var ");
+			}
 			self.s(&variable.name);
 			self.s(" ");
 			self.s(&variable.ty.to_string());
@@ -141,6 +148,11 @@ impl PrettyPrintCtx {
 			}
 
 			Statement::Expression(e) => self.print_expression(*e, storage),
+
+			Statement::Call { name, arguments } => {
+				self.s("call ");
+				self.print_call(name, arguments, storage)
+			}
 		}
 	}
 
@@ -149,6 +161,8 @@ impl PrettyPrintCtx {
 			Expression::Integer(i) => self.s(&i.to_string()),
 
 			Expression::Variable(v) => self.s(&storage.variables[*v].name),
+
+			Expression::Call { name, arguments } => self.print_call(name, arguments, storage),
 
 			Expression::True => self.s("true"),
 			Expression::False => self.s("false"),
@@ -163,6 +177,21 @@ impl PrettyPrintCtx {
 				self.s(")");
 			}
 		}
+	}
+
+	fn print_call(&mut self, name: &str, arguments: &[Idx<Expression>], storage: &BodyStorage) {
+		self.s(name);
+		self.s("(");
+
+		for (i, argument) in arguments.iter().enumerate() {
+			if i != 0 {
+				self.s(", ");
+			}
+
+			self.print_expression(*argument, storage);
+		}
+
+		self.s(")");
 	}
 
 	fn s(&mut self, s: &str) {
