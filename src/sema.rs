@@ -92,7 +92,7 @@ impl SemaContext<'_> {
 				if condition_ty != &Ty::Bool {
 					crate::error(
 						condition.loc.clone(),
-						format!("can’t use value of type “{condition_ty}” as condition of if statement",),
+						format!("can’t use “{condition_ty}” as condition of if statement",),
 					);
 				}
 
@@ -148,10 +148,7 @@ impl SemaContext<'_> {
 				let rhs_ty = &self.expression_tys[rhs_idx];
 
 				if lhs_ty != rhs_ty {
-					crate::error(
-						rhs.loc.clone(),
-						format!("can’t assign value of type “{}” to value of type “{}”", rhs_ty, lhs_ty),
-					);
+					crate::error(rhs.loc.clone(), format!("can’t assign “{}” to “{}”", rhs_ty, lhs_ty));
 				}
 
 				Statement::Assignment { lhs: lhs_idx, rhs: rhs_idx }
@@ -185,17 +182,11 @@ impl SemaContext<'_> {
 				let acceptable_tys = acceptable_tys_for_operator(*operator);
 
 				if !acceptable_tys.contains(lhs_ty) {
-					crate::error(
-						lhs.loc.clone(),
-						format!("cannot use operator “{operator}” with value of type “{lhs_ty}”"),
-					);
+					crate::error(lhs.loc.clone(), format!("cannot use operator “{operator}” with “{lhs_ty}”"));
 				}
 
 				if !acceptable_tys.contains(rhs_ty) {
-					crate::error(
-						rhs.loc.clone(),
-						format!("cannot use operator “{operator}” with value of type “{rhs_ty}”"),
-					);
+					crate::error(rhs.loc.clone(), format!("cannot use operator “{operator}” with “{rhs_ty}”"));
 				}
 
 				assert_eq!(lhs_ty, rhs_ty);
