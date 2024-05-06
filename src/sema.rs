@@ -195,6 +195,8 @@ impl SemaContext<'_> {
 				None => crate::error(expression.loc.clone(), format!("undefined variable “{name}”",)),
 			},
 
+			ast::ExpressionKind::Call { name, arguments } => todo!(),
+
 			ast::ExpressionKind::True => (Expression::True, Ty::Bool),
 			ast::ExpressionKind::False => (Expression::False, Ty::Bool),
 

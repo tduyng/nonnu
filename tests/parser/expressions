@@ -21,6 +21,12 @@ proc expressions()
 	a + b
 	abc
 	true false
+
+	proc_name()
+	proc_name(a)
+	proc_name(a, b)
+	proc_name(1 + 1, 2 * 2)
+	proc_name(trailing, comma,)
 }
 ======
 proc expressions()
@@ -47,4 +53,9 @@ proc expressions()
 	abc
 	true
 	false
+	proc_name()
+	proc_name(a)
+	proc_name(a, b)
+	proc_name((1 + 1), (2 * 2))
+	proc_name(trailing, comma)
 }
