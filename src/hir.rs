@@ -31,6 +31,8 @@ pub struct Variable {
 pub enum Statement {
 	Assignment { lhs: Idx<Expression>, rhs: Idx<Expression> },
 	If { condition: Idx<Expression>, true_branch: Idx<Statement>, false_branch: Option<Idx<Statement>> },
+	Loop { body: Idx<Statement> },
+	Break,
 	Return { value: Option<Idx<Expression>> },
 	Block(Vec<Idx<Statement>>),
 	Expression(Idx<Expression>),
@@ -108,6 +110,13 @@ impl PrettyPrintCtx {
 					self.print_statement(*false_branch, storage);
 				}
 			}
+
+			Statement::Loop { body } => {
+				self.s("for ");
+				self.print_statement(*body, storage);
+			}
+
+			Statement::Break => self.s("break"),
 
 			Statement::Return { value } => {
 				self.s("return");

@@ -27,11 +27,18 @@ struct SemaContext<'a> {
 	storage: BodyStorage,
 	scopes: Vec<IndexMap<String, Idx<Variable>>>,
 	expression_tys: ArenaMap<Idx<Expression>, Ty>,
+	loop_nesting_level: usize,
 }
 
 impl SemaContext<'_> {
 	fn new(index: &Index) -> SemaContext<'_> {
-		SemaContext { index, storage: BodyStorage::default(), scopes: Vec::new(), expression_tys: ArenaMap::new() }
+		SemaContext {
+			index,
+			storage: BodyStorage::default(),
+			scopes: Vec::new(),
+			expression_tys: ArenaMap::new(),
+			loop_nesting_level: 0,
+		}
 	}
 
 	fn analyze(mut self, procedure: &ast::Procedure) -> Procedure {
@@ -96,9 +103,22 @@ impl SemaContext<'_> {
 				Statement::If { condition: condition_idx, true_branch: true_branch_idx, false_branch: false_branch_idx }
 			}
 
-			ast::StatementKind::Loop { body } => todo!(),
+			ast::StatementKind::Loop { body } => {
+				self.loop_nesting_level += 1;
+				let empty_body = self.alloc_statement(Statement::Block(Vec::new()));
+				let body = self.analyze_statement(body).unwrap_or(empty_body);
 
-			ast::StatementKind::Break => todo!(),
+				self.loop_nesting_level -= 1;
+				Statement::Loop { body }
+			}
+
+			ast::StatementKind::Break => {
+				if self.loop_nesting_level == 0 {
+					crate::error(statement.loc.clone(), "cannot break while not in a loop".to_string());
+				}
+
+				Statement::Break
+			}
 
 			ast::StatementKind::Return { value } => {
 				let value = value.as_ref().map(|e| self.analyze_expression(e));
