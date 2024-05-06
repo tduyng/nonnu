@@ -254,6 +254,7 @@ fn tests() {
 		fs::write("test_tmp_code.c", c_code).unwrap();
 		Command::new("clang")
 			.arg("-ftrivial-auto-var-init=zero")
+			.arg("-enable-trivial-auto-var-init-zero-knowing-it-will-be-removed-from-clang")
 			.arg("-fwrapv")
 			.arg("-o")
 			.arg("test_tmp_out")
